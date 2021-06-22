@@ -285,6 +285,9 @@ export class FluentClient {
     if (this.flushing) {
       return this.sendQueue.queueLength > 0;
     }
+    if (!this.socket.writable()) {
+      return this.sendQueue.queueLength > 0;
+    }
     this.flushing = true;
     if (this.nextFlushTimeoutId !== null) {
       clearTimeout(this.nextFlushTimeoutId);
@@ -350,7 +353,7 @@ export class FluentClient {
   }
 
   private sendNext(): boolean {
-    let chunk: string | undefined;
+    let chunk: protocol.Chunk | undefined;
     if (this.ackEnabled) {
       chunk = crypto.randomBytes(16).toString("base64");
     }

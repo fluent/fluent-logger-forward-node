@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import {FluentSocket, FluentSocketOptions} from "./socket";
+import {FluentSocket, FluentSocketOptions, CloseState} from "./socket";
 import {ResponseError} from "./error";
 import * as protocol from "./protocol";
 
@@ -60,7 +60,10 @@ export class FluentAuthSocket extends FluentSocket {
     } else if (this.authState === FluentAuthState.AUTHENTICATED) {
       super.onMessage(message);
     } else {
-      this.close(new ResponseError("Received unexpected message"));
+      this.close(
+        CloseState.CLOSE,
+        new ResponseError("Received unexpected message")
+      );
     }
   }
 
@@ -84,7 +87,7 @@ export class FluentAuthSocket extends FluentSocket {
         this.authInfo
       )
     );
-    this.socketWrite(ping).catch(err => this.closeAndReconnect(err));
+    this.socketWrite(ping).catch(err => this.close(CloseState.RECONNECT, err));
   }
 
   private handlePong(message: protocol.PongMessage): void {
@@ -93,7 +96,7 @@ export class FluentAuthSocket extends FluentSocket {
       this.authState = FluentAuthState.AUTHENTICATED;
       this.onEstablished();
     } catch (e) {
-      return this.close(e);
+      return this.close(CloseState.FATAL, e);
     }
   }
 }

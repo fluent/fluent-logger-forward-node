@@ -78,3 +78,9 @@ export class DecodeError extends BaseError {
     super(message);
   }
 }
+
+export class FatalSocketError extends BaseError {
+  constructor(message: string) {
+    super(message);
+  }
+}
