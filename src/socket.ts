@@ -62,6 +62,11 @@ const isConnected = (state: SocketState): boolean => {
   );
 };
 
+/**
+ * A wrapper around a Fluent Socket
+ * 
+ * Handles connecting the socket, and manages error events and reconnection
+ */
 export class FluentSocket extends EventEmitter {
   private state: SocketState = SocketState.DISCONNECTED;
   private socket: Duplex | null = null;
@@ -309,7 +314,7 @@ export class FluentSocket extends EventEmitter {
   }
 
   // This is the EventEmitter signature
-  // @eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public emit(event: string | symbol, ...args: any[]): boolean {
     if (this.listenerCount(event) > 0) {
       return super.emit(event, ...args);
@@ -435,17 +440,9 @@ export class FluentSocket extends EventEmitter {
     return this.socketWritable() && this.state === SocketState.ESTABLISHED;
   }
 
-  /**
-   * Write data to the socket
-   *
-   * Fails if the socket is not writable
-   *
-   * @param data The data to write to the socket
-   * @returns A Promise, which resolves when the data is successfully written to the socket, or rejects if it couldn't be written
-   */
-  protected socketWrite(data: Uint8Array): Promise<void> {
+  private innerWrite(data: Uint8Array): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!this.socketWritable() || this.socket === null) {
+      if (this.socket === null) {
         return reject(new SocketNotWritableError("Socket not writable"));
       }
       const keepWriting = this.socket.write(data, err => {
@@ -464,7 +461,23 @@ export class FluentSocket extends EventEmitter {
   /**
    * Write data to the socket
    *
-   * Calls out to writable and socketWrite by default, but can be extended by subclasses.
+   * Fails if the socket is not writable
+   *
+   * @param data The data to write to the socket
+   * @returns A Promise, which resolves when the data is successfully written to the socket, or rejects if it couldn't be written
+   */
+  protected socketWrite(data: Uint8Array): Promise<void> {
+    if (!this.socketWritable()) {
+      return Promise.reject(new SocketNotWritableError("Socket not writable"));
+    }
+    return this.innerWrite(data);
+  }
+
+  /**
+   * Write data to the socket
+   *
+   * Fails if the socket is not writable
+   * 
    * @param data The data to write to the socket
    * @returns A Promise, which resolves when the data is successfully written to the socket, or rejects if it couldn't be written
    */
@@ -472,6 +485,6 @@ export class FluentSocket extends EventEmitter {
     if (!this.writable()) {
       return Promise.reject(new SocketNotWritableError("Socket not writable"));
     }
-    return this.socketWrite(data);
+    return this.innerWrite(data);
   }
 }
