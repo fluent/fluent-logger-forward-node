@@ -64,7 +64,7 @@ const isConnected = (state: SocketState): boolean => {
 
 /**
  * A wrapper around a Fluent Socket
- * 
+ *
  * Handles connecting the socket, and manages error events and reconnection
  */
 export class FluentSocket extends EventEmitter {
@@ -477,7 +477,7 @@ export class FluentSocket extends EventEmitter {
    * Write data to the socket
    *
    * Fails if the socket is not writable
-   * 
+   *
    * @param data The data to write to the socket
    * @returns A Promise, which resolves when the data is successfully written to the socket, or rejects if it couldn't be written
    */
