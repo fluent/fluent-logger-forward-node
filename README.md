@@ -3,13 +3,13 @@
 fluent-logger implementation for Node.js. 
 Built upon [fluent-logger-node](https://github.com/fluent/fluent-logger-node).
 
-[![NPM](https://nodei.co/npm/fluent-node.png?downloads=true&downloadRank=true)](https://nodei.co/npm/fluent-node/)
+[![NPM](https://nodei.co/npm/fluentd-node.png?downloads=true&downloadRank=true)](https://nodei.co/npm/fluentd-node/)
 
-[![Build Status](https://github.com/jamiees2/fluent-node/actions/workflows/main.yml/badge.svg)](https://github.com/jamiees2/fluent-node/actions)
+[![Build Status](https://github.com/jamiees2/fluentd-node/actions/workflows/main.yml/badge.svg)](https://github.com/jamiees2/fluentd-node/actions)
 
 ## Install
 
-    $ npm install fluent-node
+    $ npm install fluentd-node
 
 ## Prerequistes
 
@@ -33,7 +33,7 @@ Simple configuration is following:
 ### Send an event record to Fluentd
 
 ```js
-const FluentClient = require("fluent-node").FluentClient;
+const FluentClient = require("fluentd-node").FluentClient;
 const logger = new FluentClient("tag_prefix", {
   socket: {
     host: "localhost",
@@ -59,7 +59,7 @@ Fluentd provides explicit support for acknowledgements, which allow the client t
 
 Enabling acknowledgements means that the promise returned by `emit` will be resolved once the client receives an explicit acknowledgement from the server.
 ```js
-const FluentClient = require("fluent-node").FluentClient;
+const FluentClient = require("fluentd-node").FluentClient;
 const logger = new FluentClient("tag_prefix", {
   ack: {}
 });
@@ -70,7 +70,7 @@ Fluentd provides multiple message modes, `Message`, `Forward`, `PackedForward`(d
 
 
 ```js
-const FluentClient = require("fluent-node").FluentClient;
+const FluentClient = require("fluentd-node").FluentClient;
 const logger = new FluentClient("tag_prefix", {
   eventMode: "Message" | "Forward" | "PackedForward" | "CompressedPackedForward"
 });
@@ -142,7 +142,7 @@ const logger = new FluentClient("tag_prefix", {
     sharedKey: "secure_communication_is_awesome"
   }
   tls: {
-    ca: fs.readFileSync('/path/to/ca_cert.pem')
+    ca: fs.readFileSync("/path/to/ca_cert.pem")
   }
 });
 ```
@@ -189,10 +189,10 @@ const logger = new FluentClient("tag_prefix", {
     sharedKey: "secure_communication_is_awesome"
   }
   tls: {
-    ca: fs.readFileSync('/path/to/ca_cert.pem'),
-    cert: fs.readFileSync('/path/to/client-cert.pem'),
-    key: fs.readFileSync('/path/to/client-key.pem'),
-    passphrase: 'very-secret'
+    ca: fs.readFileSync("/path/to/ca_cert.pem"),
+    cert: fs.readFileSync("/path/to/client-cert.pem"),
+    key: fs.readFileSync("/path/to/client-key.pem"),
+    passphrase: "very-secret"
   }
 });
 ```
@@ -226,8 +226,8 @@ Server configuration:
 We can also specify [EventTime](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format) as timestamp.
 
 ```js
-const FluentClient = require("fluent-node").FluentClient;
-const EventTime = require("fluent-node").EventTime;
+const FluentClient = require("fluentd-node").FluentClient;
+const EventTime = require("fluentd-node").EventTime;
 const eventTime = new EventTime(1489547207, 745003500); // 2017-03-15 12:06:47 +0900
 const logger = new FluentClient("tag_prefix", {
   socket: {
@@ -236,14 +236,14 @@ const logger = new FluentClient("tag_prefix", {
     timeout: 3000, // 3 seconds
   }
 });
-logger.emit('tag', { message: 'This is a message' }, eventTime);
+logger.emit("tag", { message: "This is a message" }, eventTime);
 ```
 
 ### Handling errors
-The Fluent client will manage errors internally, and reject promises on errors. If you'd like to access the non-user facing internal errors, you can do so by passing `errorHandler`
+The Fluent client will manage errors internally, and reject promises on errors. If you"d like to access the non-user facing internal errors, you can do so by passing `errorHandler`
 
 ```js
-const FluentClient = require("fluent-node").FluentClient;
+const FluentClient = require("fluentd-node").FluentClient;
 const logger = new FluentClient("tag_prefix", {
   onSocketError: (err: Error) => {
     console.log("error!", err)
@@ -254,17 +254,17 @@ const logger = new FluentClient("tag_prefix", {
 ### Retrying events
 Sometimes it makes sense to resubmit events if their initial submission failed. You can do this by specifying `eventRetry`.
 ```js
-const FluentClient = require("fluent-node").FluentClient;
+const FluentClient = require("fluentd-node").FluentClient;
 const logger = new FluentClient("tag_prefix", {
   eventRetry: {}
 });
 ```
 
 ### Server
-`fluent-node` includes a fully functional forward server which can be used as a downstream Fluent sink. 
+`fluentd-node` includes a fully functional forward server which can be used as a downstream Fluent sink. 
 
 ```js
-const FluentServer = require("fluent-node").FluentServer;
+const FluentServer = require("fluentd-node").FluentServer;
 
 const server = new FluentServer({ listenOptions: { port: 24224 }});
 
