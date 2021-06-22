@@ -6,6 +6,7 @@ import {
   ResponseError,
   SocketNotWritableError,
   AuthError,
+  FatalSocketError,
 } from "./error";
 import * as protocol from "./protocol";
 import {PassThrough, Duplex} from "stream";
@@ -34,19 +35,27 @@ enum SocketState {
   ESTABLISHED, // Connected to the socket (can read/write)
   DRAINING, // The socket has blocked writes temporarily (no write, can read)
   DISCONNECTING, // The socket is in the process of being closed (no write, can read)
+  IDLE, // The socket ran into an idle timeout, and will reconnect on the next write request (no read/write)
+  FATAL, // The socket is misconfigured, and can't be recovered (no read/write)
 }
 
-const isAvailableForRead = (state: SocketState): boolean => {
-  return (
-    state === SocketState.ESTABLISHED ||
-    state === SocketState.DRAINING ||
-    state === SocketState.DISCONNECTING ||
-    state === SocketState.CONNECTED
-  );
-};
+export enum CloseState {
+  FATAL, // Fatal state, socket is unusable
+  CLOSE, //
+  RECONNECT, // Reconnect from this state
+}
 
 const isAvailableForUserRead = (state: SocketState): boolean => {
   return (
+    state === SocketState.ESTABLISHED ||
+    state === SocketState.DRAINING ||
+    state === SocketState.DISCONNECTING
+  );
+};
+
+const isConnected = (state: SocketState): boolean => {
+  return (
+    state === SocketState.CONNECTED ||
     state === SocketState.ESTABLISHED ||
     state === SocketState.DRAINING ||
     state === SocketState.DISCONNECTING
@@ -95,7 +104,15 @@ export class FluentSocket extends EventEmitter {
   }
 
   public connect(): void {
-    if (this.state !== SocketState.DISCONNECTED) {
+    if (this.state === SocketState.FATAL) {
+      throw new FatalSocketError(
+        "Socket is fatally closed, create a new socket to reconnect"
+      );
+    }
+    if (
+      this.state !== SocketState.DISCONNECTED &&
+      this.state !== SocketState.IDLE
+    ) {
       if (this.state === SocketState.DISCONNECTING) {
         // Try again once the socket has fully closed
         process.nextTick(() => this.connect());
@@ -106,7 +123,7 @@ export class FluentSocket extends EventEmitter {
     }
 
     if (this.socket === null) {
-      // If we're reconnecting early, then bail
+      // If we're reconnecting early, then cancel the timeout
       if (this.reconnectTimeoutId !== null) {
         clearTimeout(this.reconnectTimeoutId);
         this.reconnectTimeoutId = null;
@@ -123,7 +140,7 @@ export class FluentSocket extends EventEmitter {
       return;
     }
     if (this.state !== SocketState.DISCONNECTED) {
-      // Socket is connected
+      // Socket is connected or in a fatal state
       return;
     }
     // Exponentially back off based on this.connectAttempts
@@ -192,7 +209,7 @@ export class FluentSocket extends EventEmitter {
         this.onMessage(message);
       }
     } catch (e) {
-      this.close(e);
+      this.close(CloseState.FATAL, e);
     }
   }
 
@@ -201,11 +218,19 @@ export class FluentSocket extends EventEmitter {
   }
 
   private handleTimeout(): void {
-    this.closeAndReconnect(new SocketTimeoutError("Received socket timeout"));
+    if (this.socket !== null && isConnected(this.state)) {
+      this.state = SocketState.IDLE;
+      this.socket.end(() => this.emit("timeout"));
+    } else {
+      this.close(
+        CloseState.FATAL,
+        new SocketTimeoutError("Socket timed out, but we weren't connected")
+      );
+    }
   }
 
   private handleClose(): void {
-    if (!isAvailableForRead(this.state)) {
+    if (this.state === SocketState.CONNECTING) {
       // If we never got to the CONNECTED stage
       // Prevents us from exponentially retrying configuration errors
       this.connectAttempts += 1;
@@ -216,12 +241,17 @@ export class FluentSocket extends EventEmitter {
     this.passThroughStream?.end();
     this.passThroughStream = null;
 
-    const prevState = this.state;
-    this.state = SocketState.DISCONNECTED;
+    let triggerReconnect = false;
+    // Only try to reconnect if we had an didn't expect to disconnect or hit a fatal error
+    if (this.state !== SocketState.FATAL && this.state !== SocketState.IDLE) {
+      if (this.state !== SocketState.DISCONNECTING) {
+        triggerReconnect = true;
+      }
+      this.state = SocketState.DISCONNECTED;
+    }
     this.onClose();
 
-    // Only try to reconnect if we had an didn't expect to disconnect
-    if (prevState !== SocketState.DISCONNECTING) {
+    if (triggerReconnect) {
       this.maybeReconnect();
     }
   }
@@ -278,6 +308,16 @@ export class FluentSocket extends EventEmitter {
     this.emit("close");
   }
 
+  // This is the EventEmitter signature
+  // @eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public emit(event: string | symbol, ...args: any[]): boolean {
+    if (this.listenerCount(event) > 0) {
+      return super.emit(event, ...args);
+    } else {
+      return false;
+    }
+  }
+
   /**
    * Handles a message from the server
    *
@@ -289,15 +329,22 @@ export class FluentSocket extends EventEmitter {
         this.onAck(message.ack);
       } else if (protocol.isHelo(message)) {
         this.close(
+          CloseState.FATAL,
           new AuthError(
             "Server expected authentication, but client didn't provide any, closing"
           )
         );
       } else {
-        this.close(new ResponseError("Received unexpected message"));
+        this.close(
+          CloseState.CLOSE,
+          new ResponseError("Received unexpected message")
+        );
       }
     } else {
-      this.close(new ResponseError("Received unexpected message"));
+      this.close(
+        CloseState.CLOSE,
+        new ResponseError("Received unexpected message")
+      );
     }
   }
 
@@ -306,7 +353,7 @@ export class FluentSocket extends EventEmitter {
    *
    * @param chunkId The chunk from the ack event
    */
-  protected onAck(chunkId: string) {
+  protected onAck(chunkId: protocol.Chunk) {
     this.emit("ack", chunkId);
   }
 
@@ -330,27 +377,16 @@ export class FluentSocket extends EventEmitter {
    * Forcefully closes the connection, and optionally emits an error
    *
    * Changes state to DISCONNECTING, meaning we don't reconnect from this state
+   * @param closeState The state to close this socket in
    * @param error The error that closed the socket
    */
-  public close(error?: Error): void {
+  public close(closeState: CloseState, error?: Error): void {
     if (this.socket !== null) {
-      this.state = SocketState.DISCONNECTING;
-      this.socket.destroy();
-    }
-    if (error) {
-      this.onError(error);
-    }
-  }
-
-  /**
-   * Forcefully closes the connection
-   *
-   * Does not change the socket state, meaning we may try to reconnect from this state
-   *
-   * @param error The error that closed the socket
-   */
-  public closeAndReconnect(error?: Error): void {
-    if (this.socket !== null) {
+      if (closeState === CloseState.FATAL) {
+        this.state = SocketState.FATAL;
+      } else if (closeState === CloseState.CLOSE) {
+        this.state = SocketState.DISCONNECTING;
+      }
       this.socket.destroy();
     }
     if (error) {
@@ -362,6 +398,8 @@ export class FluentSocket extends EventEmitter {
    * Check if the socket is writable
    *
    * Will terminate the socket if it is half-closed
+   *
+   * Will connect the socket if it is disconnected
    * @returns If the socket is in a state to be written to
    */
   private socketWritable(): boolean {
@@ -371,11 +409,18 @@ export class FluentSocket extends EventEmitter {
       (this.state !== SocketState.ESTABLISHED &&
         this.state !== SocketState.CONNECTED)
     ) {
+      // Resume from idle state
+      if (this.state === SocketState.IDLE) {
+        this.connect();
+      }
       return false;
     }
     // Check if the socket is writable
     if (!this.socket.writable) {
-      this.closeAndReconnect(new SocketNotWritableError("Socket not writable"));
+      this.close(
+        CloseState.RECONNECT,
+        new SocketNotWritableError("Socket not writable")
+      );
       return false;
     }
     return true;
@@ -387,7 +432,7 @@ export class FluentSocket extends EventEmitter {
    * @returns If the socket is in a state to be written to
    */
   public writable(): boolean {
-    return this.state === SocketState.ESTABLISHED && this.socketWritable();
+    return this.socketWritable() && this.state === SocketState.ESTABLISHED;
   }
 
   /**
@@ -424,7 +469,7 @@ export class FluentSocket extends EventEmitter {
    * @returns A Promise, which resolves when the data is successfully written to the socket, or rejects if it couldn't be written
    */
   public write(data: Uint8Array): Promise<void> {
-    if (this.state !== SocketState.ESTABLISHED) {
+    if (!this.writable()) {
       return Promise.reject(new SocketNotWritableError("Socket not writable"));
     }
     return this.socketWrite(data);

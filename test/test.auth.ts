@@ -3,7 +3,7 @@ import * as chaiAsPromised from "chai-as-promised";
 import * as sinon from "sinon";
 
 import {FluentAuthSocket, FluentAuthOptions} from "../src/auth";
-import {FluentSocketOptions} from "../src/socket";
+import {CloseState, FluentSocketOptions} from "../src/socket";
 import * as protocol from "../src/protocol";
 import {fakeSocket} from "./helpers";
 
@@ -346,7 +346,7 @@ describe("FluentAuthSocket", () => {
       const oldStream = stream;
       stream = fakeSocket();
       stream.readable.on("data", dataHandler);
-      socket.closeAndReconnect();
+      socket.close(CloseState.RECONNECT);
       // new stream
       socket.once("writable", () => {
         expect(oldStream.socket.destroyed).to.be.true;

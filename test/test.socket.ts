@@ -1,6 +1,6 @@
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
-import {FluentSocket, FluentSocketOptions} from "../src/socket";
+import {CloseState, FluentSocket, FluentSocketOptions} from "../src/socket";
 import * as protocol from "../src/protocol";
 import * as sinon from "sinon";
 
@@ -89,7 +89,7 @@ describe("FluentSocket", () => {
     socket.connect();
     sinon.assert.calledOnce(connectStub);
 
-    socket.on("ack", (chunk: string) => {
+    socket.on("ack", (chunk: protocol.Chunk) => {
       expect(chunk).to.equal("chonk");
       done();
     });
@@ -135,7 +135,7 @@ describe("FluentSocket", () => {
     stream.writable.write(protocol.encode("TESTINGTON"));
   });
 
-  it("should close on timeout", done => {
+  it("should close on timeout and reconnect on writable", done => {
     const {socket, stream, connectStub} = createFluentSocket({
       disableReconnect: true,
     });
@@ -143,13 +143,19 @@ describe("FluentSocket", () => {
     socket.connect();
     sinon.assert.calledOnce(connectStub);
 
-    socket.on("error", (error: Error) => {
-      expect(error.name).to.equal("SocketTimeoutError");
+    socket.once("close", () => {
       expect(stream.socket.destroyed).to.be.true;
-      done();
+      stream.socket = fakeSocket().socket;
+      socket.once("writable", () => {
+        sinon.assert.calledTwice(connectStub);
+        done();
+      });
+      expect(socket.writable()).to.be.false;
     });
 
-    stream.socket.emit("timeout");
+    socket.once("writable", () => {
+      stream.socket.emit("timeout");
+    });
   });
 
   it("should reconnect on error if reconnect settings are provided", done => {
@@ -164,7 +170,7 @@ describe("FluentSocket", () => {
     const spy = sinon.spy(socket, "connect");
 
     socket.once("writable", () => {
-      socket.closeAndReconnect();
+      socket.close(CloseState.RECONNECT);
       expect(stream.socket.destroyed).to.be.true;
       socket.once("writable", () => {
         sinon.assert.calledOnce(spy);
@@ -193,7 +199,7 @@ describe("FluentSocket", () => {
       });
     });
     socket.on("writable", () => {
-      socket.close();
+      socket.close(CloseState.CLOSE);
     });
   });
 
