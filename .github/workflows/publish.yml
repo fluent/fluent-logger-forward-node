@@ -19,10 +19,6 @@ jobs:
       - name: Version
         run: yarn version --new-version "${GITHUB_REF:11}" --no-git-tag-version
 
-      - run: yarn publish --access public --new-version
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-
       - name: Publish
         run: yarn publish --access public
         env:
