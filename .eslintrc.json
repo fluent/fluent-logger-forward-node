@@ -2,6 +2,9 @@
   "extends": "./node_modules/gts/",
   "rules": {
     "no-prototype-builtins": "off",
-    "quotes": ["error", "double"]
+    "quotes": ["error", "double"],
+    "node/no-unpublished-import": ["error", {
+      "tryExtensions": [".js", ".ts"]
+  }]
   }
 }

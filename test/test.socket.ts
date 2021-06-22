@@ -24,7 +24,7 @@ const createFluentSocket = (options?: FluentSocketOptions) => {
 
 describe("FluentSocket", () => {
   it("should connect", () => {
-    const socket = new FluentSocket({ disableReconnect: true });
+    const socket = new FluentSocket({disableReconnect: true});
     const connectStub = sinon.stub(socket, <any>"createTcpSocket");
     connectStub.returns(fakeSocket().socket);
 
@@ -44,7 +44,7 @@ describe("FluentSocket", () => {
   });
 
   it("should emit writable on connect", done => {
-    const {socket, connectStub} = createFluentSocket({ disableReconnect: true });
+    const {socket, connectStub} = createFluentSocket({disableReconnect: true});
 
     socket.on("writable", () => {
       done();
@@ -56,7 +56,9 @@ describe("FluentSocket", () => {
   });
 
   it("should handle drain", done => {
-    const {socket, stream, connectStub} = createFluentSocket({ disableReconnect: true });
+    const {socket, stream, connectStub} = createFluentSocket({
+      disableReconnect: true,
+    });
 
     sinon.stub(stream.socket, "write").returns(false);
 
@@ -80,7 +82,9 @@ describe("FluentSocket", () => {
   });
 
   it("should parse messages", done => {
-    const {socket, stream, connectStub} = createFluentSocket({ disableReconnect: true });
+    const {socket, stream, connectStub} = createFluentSocket({
+      disableReconnect: true,
+    });
 
     socket.connect();
     sinon.assert.calledOnce(connectStub);
@@ -96,7 +100,9 @@ describe("FluentSocket", () => {
   });
 
   it("should reject helos", done => {
-    const {socket, stream, connectStub} = createFluentSocket({ disableReconnect: true });
+    const {socket, stream, connectStub} = createFluentSocket({
+      disableReconnect: true,
+    });
 
     socket.connect();
     sinon.assert.calledOnce(connectStub);
@@ -113,7 +119,9 @@ describe("FluentSocket", () => {
   });
 
   it("should reject bad messages", done => {
-    const {socket, stream, connectStub} = createFluentSocket({ disableReconnect: true });
+    const {socket, stream, connectStub} = createFluentSocket({
+      disableReconnect: true,
+    });
 
     socket.connect();
     sinon.assert.calledOnce(connectStub);
@@ -128,7 +136,9 @@ describe("FluentSocket", () => {
   });
 
   it("should close on timeout", done => {
-    const {socket, stream, connectStub} = createFluentSocket({ disableReconnect: true });
+    const {socket, stream, connectStub} = createFluentSocket({
+      disableReconnect: true,
+    });
 
     socket.connect();
     sinon.assert.calledOnce(connectStub);

@@ -46,7 +46,7 @@ export class FluentServer extends EventEmitter {
 
   constructor(options: FluentServerOptions = {}) {
     super();
-    this.listenOptions = options.listenOptions || { port: 0 };
+    this.listenOptions = options.listenOptions || {port: 0};
     this.tlsOptions = options.tlsOptions || null;
     this.security = options.security || null;
     this.clients = {};
