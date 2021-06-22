@@ -1,0 +1,6 @@
+{
+    "rules": {
+        "node/no-unpublished-import": "off",
+        "@typescript-eslint/no-explicit-any": "off"
+    }
+}

@@ -1,0 +1,7 @@
+{
+  "extends": "./node_modules/gts/",
+  "rules": {
+    "no-prototype-builtins": "off",
+    "quotes": ["error", "double"]
+  }
+}
