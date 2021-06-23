@@ -541,6 +541,7 @@ export class FluentClient {
       } else if (this.nextFlushTimeoutId === null) {
         // Otherwise, schedule the next flush interval
         this.nextFlushTimeoutId = setTimeout(() => {
+          this.nextFlushTimeoutId = null;
           this.flush();
         }, this.flushInterval);
       }
@@ -556,12 +557,18 @@ export class FluentClient {
    * @param limit The limit to enforce
    */
   private dropLimit(limit: SendQueueLimit): void {
-    if (this.sendQueue.queueSize > limit.size) {
+    if (
+      this.sendQueue.queueSize !== -1 &&
+      this.sendQueue.queueSize > limit.size
+    ) {
       while (this.sendQueue.queueSize > limit.size) {
         this.sendQueue.dropEntry();
       }
     }
-    if (this.sendQueue.queueLength > limit.length) {
+    if (
+      this.sendQueue.queueLength !== -1 &&
+      this.sendQueue.queueLength > limit.length
+    ) {
       while (this.sendQueue.queueLength > limit.length) {
         this.sendQueue.dropEntry();
       }
