@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Docs](https://img.shields.io/badge/Docs-latest-green)](https://jamiees2.github.io/fluentd-node/)
 
-fluent-logger implementation for Node.js. 
+[Fluent Forward Protocol](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1) implementation for Node.js. 
 Built upon [fluent-logger-node](https://github.com/fluent/fluent-logger-node).
 
 [![NPM](https://nodei.co/npm/fluentd-node.png?downloads=true&downloadRank=true)](https://nodei.co/npm/fluentd-node/)
