@@ -1,11 +1,13 @@
 # fluent-logger for Node.js
+[![Build Status](https://github.com/jamiees2/fluentd-node/actions/workflows/main.yml/badge.svg)](https://github.com/jamiees2/fluentd-node/actions)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Docs](https://img.shields.io/badge/Docs-latest-green)](https://jamiees2.github.io/fluentd-node/)
 
 fluent-logger implementation for Node.js. 
 Built upon [fluent-logger-node](https://github.com/fluent/fluent-logger-node).
 
 [![NPM](https://nodei.co/npm/fluentd-node.png?downloads=true&downloadRank=true)](https://nodei.co/npm/fluentd-node/)
 
-[![Build Status](https://github.com/jamiees2/fluentd-node/actions/workflows/main.yml/badge.svg)](https://github.com/jamiees2/fluentd-node/actions)
 
 ## Install
 
