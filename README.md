@@ -56,7 +56,7 @@ emit(label: string, data: Record<string, any>, timestamp: number | Date | EventT
 
 The returned Promise is resolved once the event is written to the socket, or rejected if an error occurs.
 
-### Acknowledgements
+### Fluentd acknowledgements
 Fluentd provides explicit support for acknowledgements, which allow the client to be sure that the event reached its destination. 
 
 Enabling acknowledgements means that the promise returned by `emit` will be resolved once the client receives an explicit acknowledgement from the server.
@@ -262,6 +262,9 @@ const logger = new FluentClient("tag_prefix", {
 });
 ```
 
+### Client Options
+For a full list of the client options and methods, see the [FluentClient docs](https://jamiees2.github.io/fluentd-node/classes/fluentclient.html)
+
 ### Server
 `fluentd-node` includes a fully functional forward server which can be used as a downstream Fluent sink. 
 
@@ -294,6 +297,8 @@ Fluentd config:
   </secondary>
 </match>
 ```
+
+For a full list of the server options and methods, see the [FluentServer docs](https://jamiees2.github.io/fluentd-node/classes/fluentserver.html)
 
 
 ## License
