@@ -106,7 +106,10 @@ export type FluentClientOptions = {
   /**
    * The timestamp resolution of events passed to FluentD.
    *
-   * Defaults to false (seconds). If true, the resolution will be in milliseconds
+   * Passing false here means that the timestamps will be emitted as numbers (unless you explicitly provide an EventTime)
+   * Passing true means that timestamps will alwyas be emitted as EventTime object instances. This includes timestamps
+   *
+   * Defaults to false (seconds). If true, the resolution will be in milliseconds.
    */
   milliseconds?: boolean;
   /**
@@ -162,7 +165,7 @@ export class FluentClient {
   private ackOptions: AckOptions;
   private ackQueue: Map<protocol.Chunk, AckData> = new Map();
   private sendQueue: Queue;
-  private timeResolution: number;
+  private milliseconds: boolean;
   private retrier: EventRetrier | null;
 
   private socket: FluentSocket;
@@ -210,7 +213,7 @@ export class FluentClient {
       ackTimeout: 500,
       ...(options.ack || {}),
     };
-    this.timeResolution = options.milliseconds ? 1 : 1000;
+    this.milliseconds = !!options.milliseconds;
 
     this.flushInterval = options.flushInterval || 0;
     this.sendQueueFlushLimit = {
@@ -272,7 +275,7 @@ export class FluentClient {
    * Emits an event to the Fluent Server
    *
    * @param data The event to emit (required)
-   * @param timestamp The timestamp of the event (optional)
+   * @param timestamp A millisecond resolution timestamp to associate with the event (optional)
    * @returns A Promise, which resolves when the event is successfully sent to the server.
    *  Enabling acknowledgements waits until the server indicates they have received the event.
    */
@@ -291,7 +294,7 @@ export class FluentClient {
    *
    * @param label The label to emit the data with (optional)
    * @param data The event to emit (required)
-   * @param timestamp The timestamp of the event (optional)
+   * @param timestamp A millisecond resolution timestamp to associate with the event (optional)
    * @returns A Promise, which resolves when the event is successfully sent to the server.
    *  Enabling acknowledgements waits until the server indicates they have received the event.
    */
@@ -352,16 +355,22 @@ export class FluentClient {
     if (tag === null || tag.length === 0) {
       return Promise.reject(new MissingTagError("tag is missing"));
     }
-    let time: protocol.Time;
-    if (
-      timestamp === null ||
-      (typeof timestamp !== "number" && !(timestamp instanceof EventTime))
-    ) {
-      time = Math.floor(
-        (timestamp ? timestamp.getTime() : Date.now()) / this.timeResolution
-      );
+
+    let millisOrEventTime: number | EventTime;
+    if (timestamp === null || timestamp instanceof Date) {
+      millisOrEventTime = timestamp ? timestamp.getTime() : Date.now();
     } else {
-      time = timestamp;
+      millisOrEventTime = timestamp;
+    }
+
+    let time: protocol.Time;
+    if (typeof millisOrEventTime === "number") {
+      // Convert timestamp to EventTime or number in second resolution
+      time = this.milliseconds
+        ? EventTime.fromTimestamp(millisOrEventTime)
+        : Math.floor(millisOrEventTime / 1000);
+    } else {
+      time = millisOrEventTime;
     }
     if (this.retrier !== null) {
       return this.retrier.retryPromise(() => this.pushEvent(tag, time, data));
