@@ -1,7 +1,7 @@
 # fluentd-node 
 [![Build Status](https://github.com/jamiees2/fluentd-node/actions/workflows/main.yml/badge.svg)](https://github.com/jamiees2/fluentd-node/actions)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Docs](https://img.shields.io/badge/Docs-latest-green)](https://jamiees2.github.io/fluentd-node/)
+[![Docs](https://img.shields.io/badge/Docs-latest-informational)](https://jamiees2.github.io/fluentd-node/)
 
 [Fluent Forward Protocol](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1) implementation for Node.js. 
 Built upon [fluent-logger-node](https://github.com/fluent/fluent-logger-node).
