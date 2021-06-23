@@ -213,6 +213,40 @@ describe("FluentClient", () => {
 
         sinon.assert.calledOnce(spy);
       });
+
+      it("should flush after setting up timeout and the socket not being flushable after timeout", async () => {
+        const timeout = 50;
+        const {client, socket} = createFluentClient("test", {
+          flushInterval: timeout /* 100ms */,
+        });
+
+        const spy = sandbox.spy(client, <any>"innerFlush");
+        const firstEvent = client.emit("a", {event: "foo bar"});
+        const secondEvent = client.emit("b", {event: "lorem"});
+
+        sinon.assert.notCalled(spy);
+
+        await new Promise(r => setTimeout(r, timeout / 2));
+
+        sinon.assert.notCalled(spy);
+        socket.isWritable = false;
+
+        await new Promise(r => setTimeout(r, timeout * 2));
+
+        console.log("HERE");
+        expect(firstEvent).to.not.be.fulfilled;
+        expect(secondEvent).to.not.be.fulfilled;
+
+        sinon.assert.calledOnce(spy);
+
+        socket.isWritable = true;
+        socket.emit("writable");
+
+        await expect(firstEvent).to.eventually.be.fulfilled;
+        await expect(secondEvent).to.eventually.be.fulfilled;
+
+        sinon.assert.calledTwice(spy);
+      });
     });
     describe("when no flush interval is provided", () => {
       it("should trigger flush after emit", async () => {

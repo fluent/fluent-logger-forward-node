@@ -34,10 +34,14 @@ export type PacketData = {
 export abstract class Queue {
   /**
    * The # of entries in the queue
+   *
+   * -1 if the queue implementation doesn't expose this
    */
   public abstract get queueLength(): number;
   /**
    * The total size of the queue
+   *
+   * -1 if the queue implementation doesn't expose this
    */
   public abstract get queueSize(): number;
   /**
