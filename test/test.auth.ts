@@ -153,7 +153,7 @@ describe("FluentAuthSocket", () => {
 
     socket.on("error", (error: Error) => {
       expect(errorOk).to.be.true;
-      expect(error.name).to.equal("ResponseError");
+      expect(error.name).to.equal("UnexpectedMessageError");
       expect(stream.socket.destroyed).to.be.true;
       done();
     });
@@ -193,7 +193,7 @@ describe("FluentAuthSocket", () => {
 
     socket.on("error", (error: Error) => {
       expect(errorOk).to.be.true;
-      expect(error.name).to.equal("ResponseError");
+      expect(error.name).to.equal("UnexpectedMessageError");
       expect(stream.socket.destroyed).to.be.true;
       done();
     });

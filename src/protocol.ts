@@ -12,6 +12,8 @@ import {
   DecodeError,
 } from "./error";
 
+// Types from the [Forward protocol](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1)
+
 export type SharedKey = string;
 export type SharedKeyNonce = string | Uint8Array;
 export type AuthSalt = string | Uint8Array;
@@ -408,6 +410,18 @@ export const generatePing = (
   ];
 };
 
+/**
+ * Validates a PING message from the client
+ *
+ * Assumes a valid structure (isPing has been called)
+ *
+ * @param m The ping message to validate
+ * @param serverHostname The hostname of the client
+ * @param serverKeyInfo The key info known to the server
+ * @param authInfo Authentication information to validate (optional, auth not required if missing)
+ * @returns An object with the complete SharedKeyInfo
+ * @throws Error on mismatches
+ */
 export const checkPing = (
   m: PingMessage,
   serverHostname: ServerHostname,
@@ -464,6 +478,15 @@ export const generatePong = (
   return ["PONG", authenticated, reason, hostname, sharedKeyHexDigest];
 };
 
+/**
+ * Checks the PONG message from the server
+ *
+ * Assumes a valid structure (isPong has been called)
+ * @param m The PONG message from the server to validate
+ * @param clientHostname The client hostname
+ * @param sharedKeyInfo The client shared key information
+ * @throws Error on validation issues
+ */
 export const checkPong = (
   m: PongMessage,
   clientHostname: ClientHostname,
@@ -563,9 +586,18 @@ export const generateEntry = (time: Time, event: EventRecord): Entry => {
 export type DecodedEntries = {
   tag: Tag;
   entries: Entry[];
+  /**
+   * The chunk from the transport message, if any, used for acks
+   */
   chunk?: Chunk;
 };
 
+/**
+ * Parses a transport message from the client
+ *
+ * @param message The transport message to parse
+ * @returns An object with the decoded entries from the object
+ */
 export const parseTransport = (
   message: ClientTransportMessage
 ): DecodedEntries => {
@@ -609,6 +641,9 @@ export const parseTransport = (
   }
 };
 
+/**
+ * The [EventTime](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format) ext code is 0
+ */
 const EVENT_TIME_EXT_TYPE = 0x00;
 const extensionCodec = new ExtensionCodec();
 extensionCodec.register({
@@ -631,7 +666,19 @@ extensionCodec.register({
   },
 });
 
+/**
+ * Creates a newEncoder
+ *
+ * We can't share these because we were running into strange bugs where the internal buffers were being overwritten
+ * @returns A new Encoder to use
+ */
 const encoder = (): Encoder => new Encoder(extensionCodec);
+/**
+ * Creates a new Decoder
+ *
+ * We can't share these because we were running into strange bugs where the internal buffers were being overwritten
+ * @returns A new Decoder to use
+ */
 const decoder = (): Decoder => new Decoder(extensionCodec);
 
 export const encode = (item: any): Uint8Array => {
@@ -660,25 +707,42 @@ export const encodeMessage = (
   return encode(item);
 };
 
+/**
+ * Decodes a stream of data from the client
+ *
+ * @param dataStream A Readable to read the data from
+ * @returns An iterable of messages from the client, not type checked
+ */
 export const decodeClientStream = (
   dataStream: Readable
 ): AsyncIterable<ClientMessage> => {
   return decoder().decodeStream(dataStream) as AsyncIterable<ClientMessage>;
 };
 
+/**
+ * Decodes a stream of data from the server
+ *
+ * @param dataStream A Readable to read the data from
+ * @returns An iterable of messages from the server, not type checked
+ */
 export const decodeServerStream = (
   dataStream: Readable
 ): AsyncIterable<ServerMessage> => {
   return decoder().decodeStream(dataStream) as AsyncIterable<ServerMessage>;
 };
 
+/**
+ * Decodes a sequence of entries from a Buffer
+ *
+ * Useful for PackedForward|CompressedPackedForward event modes
+ * @param data The data to unpack
+ * @returns The entries from the data
+ */
 export const decodeEntries = (data: Uint8Array): Entry[] => {
   const entries = Array.from(decoder().decodeMulti(data));
   if (entries.every(isEntry)) {
     return entries as Entry[];
   } else {
-    throw new DecodeError(
-      "Received invalid entries " + JSON.stringify(entries)
-    );
+    throw new DecodeError("Received invalid entries");
   }
 };

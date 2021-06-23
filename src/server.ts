@@ -3,14 +3,25 @@ import * as tls from "tls";
 import * as crypto from "crypto";
 import * as EventEmitter from "events";
 import * as protocol from "./protocol";
-import {ResponseError} from "./error";
+import {UnexpectedMessageError} from "./error";
 
+/**
+ * Manages the state of the client
+ */
 enum ClientState {
+  /**
+   * Can receive events from this client
+   */
   ESTABLISHED,
-  HELO,
+  /**
+   * Waiting for a PING from this client
+   */
   PING,
 }
 
+/**
+ * The client information record
+ */
 type ClientInfo = {
   socket: net.Socket;
   state: ClientState;
@@ -21,20 +32,65 @@ type ClientInfo = {
 
 type Socket = tls.TLSSocket | net.Socket;
 
-type FluentServerSecurityOptions = {
+/**
+ * The server security hardening options
+ */
+export type FluentServerSecurityOptions = {
+  /**
+   * The hostname of the server. Should be unique to this process
+   */
   serverHostname: string;
+  /**
+   * The shared key to authenticate clients with
+   */
   sharedKey: string;
+  /**
+   * Whether to use user authentication
+   */
   authorize: boolean;
+  /**
+   * A dict of users to their passwords
+   */
   userDict: Record<string, string>;
 };
 
-type FluentServerOptions = {
+/**
+ * The server setup options
+ */
+export type FluentServerOptions = {
+  /**
+   * The security options.
+   *
+   * Defaults to undefined (no auth).
+   */
   security?: FluentServerSecurityOptions;
+  /**
+   * Whether or not to keep the sockets alive. Sent in HELO, but currently ignored
+   *
+   * Defaults to false
+   */
   keepalive?: boolean;
+  /**
+   * TLS setup options.
+   *
+   * See the [Node.js docs](https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener) for more info
+   *
+   * Defaults to undefined
+   */
   tlsOptions?: tls.TlsOptions;
+  /**
+   * Socket listen options
+   *
+   * See the [Node.js docs](https://nodejs.org/api/net.html#net_server_listen_options_callback) for more info
+   *
+   * Defaults to {port: 0}
+   */
   listenOptions?: net.ListenOptions;
 };
 
+/**
+ * A Fluent [Forward protocol](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1) compatible server
+ */
 export class FluentServer extends EventEmitter {
   private _port: number | undefined;
   private tlsOptions: tls.TlsOptions | null;
@@ -44,6 +100,11 @@ export class FluentServer extends EventEmitter {
   private keepalive: boolean;
   private listenOptions: net.ListenOptions;
 
+  /**
+   * Creates a new server
+   *
+   * @param options The server connection options
+   */
   constructor(options: FluentServerOptions = {}) {
     super();
     this.listenOptions = options.listenOptions || {port: 0};
@@ -61,6 +122,10 @@ export class FluentServer extends EventEmitter {
     }
   }
 
+  /**
+   * Handles a connection event on the server
+   * @param socket
+   */
   private async handleConnection(socket: Socket): Promise<void> {
     const clientKey = socket.remoteAddress + ":" + socket.remotePort;
     socket.on("end", () => {
@@ -98,7 +163,7 @@ export class FluentServer extends EventEmitter {
         if (clientInfo.state === ClientState.PING && protocol.isPing(message)) {
           if (!clientInfo.serverKeyInfo || !this.security) {
             // Unexpected PONG when we didn't send a HELO
-            throw new ResponseError("Unexpected PING");
+            throw new UnexpectedMessageError("Unexpected PING");
           }
           try {
             const authResult = protocol.checkPing(
@@ -146,7 +211,7 @@ export class FluentServer extends EventEmitter {
             this.onEntry(decodedEntries.tag, ...entry);
           });
         } else {
-          throw new ResponseError("Unexpected message");
+          throw new UnexpectedMessageError("Unexpected message");
         }
       }
     } catch (e) {
@@ -155,14 +220,33 @@ export class FluentServer extends EventEmitter {
     }
   }
 
-  onEntry(tag: string, time: protocol.Time, record: protocol.EventRecord) {
+  /**
+   * Called for each entry received by the server.
+   *
+   * @param tag The tag of the entry
+   * @param time The timestamp of the entry
+   * @param record The entry record
+   */
+  protected onEntry(
+    tag: protocol.Tag,
+    time: protocol.Time,
+    record: protocol.EventRecord
+  ) {
     this.emit("entry", tag, time, record);
   }
 
-  get port() {
+  /**
+   * Returns the port the server is currently listening on
+   */
+  get port(): number | undefined {
     return this._port;
   }
 
+  /**
+   * Start the server
+   *
+   * @returns A Promise which resolves once the server is listening
+   */
   listen(): Promise<void> {
     return new Promise(resolve => {
       this.server.listen(this.listenOptions, () => {
@@ -174,6 +258,11 @@ export class FluentServer extends EventEmitter {
     });
   }
 
+  /**
+   * Shutdown the server
+   *
+   * @returns A Promise, which resolves once the server has fully shut down.
+   */
   close(): Promise<void> {
     return new Promise(resolve => {
       this.server.close(() => {

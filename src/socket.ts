@@ -3,7 +3,7 @@ import * as tls from "tls";
 import * as EventEmitter from "events";
 import {
   SocketTimeoutError,
-  ResponseError,
+  UnexpectedMessageError,
   SocketNotWritableError,
   AuthError,
   FatalSocketError,
@@ -11,38 +11,180 @@ import {
 import * as protocol from "./protocol";
 import {PassThrough, Duplex} from "stream";
 
-type ReconnectOptions = {
+/**
+ * Reconnection settings for the socket
+ *
+ * The parameters represent an exponential backoff formula:
+ * min(maxDelay, max(minDelay, backoff^attempts * delay))
+ *
+ * The attempt count is incremented each time we fail a connection,
+ * and set to zero each time a connection is successfully made.
+ * Note this is before handshaking
+ */
+export type ReconnectOptions = {
+  /**
+   * The backoff factor for each attempt
+   *
+   * Defaults to 2
+   */
   backoff: number;
+  /**
+   * The delay factor for each attempt
+   *
+   * Defaults to 500
+   */
   delay: number;
+  /**
+   * The global minimum delay
+   */
   minDelay: number;
+  /**
+   * The global maximum delay
+   */
   maxDelay: number;
 };
 
 export type FluentSocketOptions = {
+  /**
+   * If connecting to a unix domain socket, e.g unix:///var/run/fluentd.sock, then specify that here.
+   *
+   * This overrides host/port below. Defaults to `undefined`.
+   */
   path?: string;
+  /**
+   * The host (IP) to connect to
+   *
+   * Defaults to `localhost`.
+   */
   host?: string;
+  /**
+   * The port to connect to
+   *
+   * Defaults to `24224`.
+   */
   port?: number;
+  /**
+   * The socket timeout to set. After timing out, the socket will be idle and reconnect once the client wants to write something.
+   *
+   * Defaults to 3000 (3 seconds)
+   */
   timeout?: number;
+  /**
+   * TLS connection options. See [Node docs](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback)
+   *
+   * If provided, the socket will be a TLS socket.
+   */
   tls?: tls.ConnectionOptions;
+  /**
+   * Reconnection options. See subtype for defaults.
+   */
   reconnect?: Partial<ReconnectOptions>;
+  /**
+   * Disable reconnection on failure. This can be useful for one-offs
+   *
+   * Defaults to false
+   */
   disableReconnect?: boolean;
 };
 
 enum SocketState {
-  DISCONNECTED, // No socket, (no read/write)
-  CONNECTING, // Working on establishing the connection, (no read/write)
-  CONNECTED, // Connected to the socket, but haven't finished connection negotiation, (internal read/write)
-  ESTABLISHED, // Connected to the socket (can read/write)
-  DRAINING, // The socket has blocked writes temporarily (no write, can read)
+  /**
+   * In this state, the socket doesn't exist, and we can't read or write from it.
+   *
+   * No read
+   * No write
+   * Transitions to CONNECTING on call to connect() (potentially from maybeReconnect())
+   */
+  DISCONNECTED,
+  /**
+   * In this state we're working on making the connection (opening socket + TLS negotiations if any), but haven't finished.
+   *
+   * No read
+   * No write
+   * Transitions to DISCONNECTED on error
+   * Transitions to CONNECTED on success
+   */
+  CONNECTING,
+  /**
+   * In this state, we're doing some preparatory work before accepting writes
+   *
+   * Internal read
+   * Internal write
+   * Transitions to DISCONNECTED on soft error (will reconnect)
+   * Transitions to DISCONNECTING on close + medium error
+   * Transitions to FATAL on hard error
+   */
+  CONNECTED,
+  /**
+   * In this state, we're fully open, and able to read and write to the socket
+   *
+   * Can read
+   * Can write
+   * Transitions to DISCONNECTED on soft error (will reconnect)
+   * Transitions to DISCONNECTING on close + medium error
+   * Transitions to FATAL on hard error
+   * Tansitions to DRAINING when socket.write returns false (buffer full)
+   * Transitions to IDLE on timeout
+   */
+  ESTABLISHED,
+  /**
+   * In this state, the socket has blocked writes, as the kernel buffer is full.
+   *
+   * Can read
+   * No write
+   * Transitions to ESTABLISHED on drain event
+   * Transitions to DISCONNECTED on soft error (will reconnect)
+   * Transitions to DISCONNECTING on close + medium error
+   * Transitions to FATAL on hard error
+   */
+  DRAINING,
+  /**
+   * In this state, the socket is being closed, and will not be reconnected, either as the result of user action, or an event.
+   *
+   * Can read
+   * No write
+   * Transitions to DISCONNECTED on close event
+   */
   DISCONNECTING, // The socket is in the process of being closed (no write, can read)
-  IDLE, // The socket ran into an idle timeout, and will reconnect on the next write request (no read/write)
-  FATAL, // The socket is misconfigured, and can't be recovered (no read/write)
+  /**
+   * In this state, the socket has timed out due to inactivity. It will be reconnected once the user calls `writable()`.
+   *
+   * We don't auto reconnect from this state, as the idle timeout indicates low event activity.
+   * It can also potentially indicate a misconfiguration where the timeout is too low.
+   *
+   * No read
+   * No write
+   * Transitions to CONNECTING on call to connect() (potentially from writable())
+   */
+  IDLE,
+  /**
+   * In this state, the socket has run into a fatal error, which it believes there is no point in reconnecting.
+   *
+   * This is almost always a configuration misconfiguration, for example the server requires auth, but the client has no auth information.
+   *
+   * No read
+   * No write
+   * Does not transition
+   */
+  FATAL,
 }
 
+/**
+ * How to close the socket
+ */
 export enum CloseState {
-  FATAL, // Fatal state, socket is unusable
-  CLOSE, //
-  RECONNECT, // Reconnect from this state
+  /**
+   * Make the socket unable to reconnect
+   */
+  FATAL,
+  /**
+   * Allow the socket to reconnect manually
+   */
+  CLOSE,
+  /**
+   * Allow the socket to reconnect automatically
+   */
+  RECONNECT,
 }
 
 const isAvailableForUserRead = (state: SocketState): boolean => {
@@ -80,8 +222,17 @@ export class FluentSocket extends EventEmitter {
   private tlsOptions: tls.ConnectionOptions;
   private reconnectEnabled: boolean;
   private reconnect: ReconnectOptions;
+  /**
+   * Used so we can read from the socket through an AsyncIterable.
+   * Protects the reader from accidentally closing the socket on errors.
+   */
   private passThroughStream: PassThrough | null = null;
 
+  /**
+   * Creates a new socket
+   *
+   * @param options The socket connection options
+   */
   constructor(options: FluentSocketOptions = {}) {
     super();
     if (options.path) {
@@ -108,6 +259,11 @@ export class FluentSocket extends EventEmitter {
     };
   }
 
+  /**
+   * Connects the socket to the upstream server
+   *
+   * @returns void
+   */
   public connect(): void {
     if (this.state === SocketState.FATAL) {
       throw new FatalSocketError(
@@ -140,12 +296,16 @@ export class FluentSocket extends EventEmitter {
     }
   }
 
+  /**
+   * May reconnect the socket
+   * @returns void
+   */
   private maybeReconnect(): void {
     if (!this.reconnectEnabled || this.reconnectTimeoutId !== null) {
       return;
     }
     if (this.state !== SocketState.DISCONNECTED) {
-      // Socket is connected or in a fatal state
+      // Socket is connected or in a fatal state or idle
       return;
     }
     // Exponentially back off based on this.connectAttempts
@@ -163,14 +323,28 @@ export class FluentSocket extends EventEmitter {
     }, reconnectInterval);
   }
 
+  /**
+   * Creates a new TLS socket
+   * @returns A new socket to use for the connection
+   */
   private createTlsSocket(): tls.TLSSocket {
     return tls.connect({...this.tlsOptions, ...this.socketParams});
   }
 
+  /**
+   * Creates a new TCP socket
+   * @returns A new socket to use for the connection
+   */
   private createTcpSocket(): net.Socket {
     return net.createConnection({...this.socketParams, timeout: this.timeout});
   }
 
+  /**
+   * Returns a new socket
+   *
+   * @param onConnect Called once the socket is connected
+   * @returns
+   */
   private createSocket(onConnect: () => void): Duplex {
     if (this.tlsEnabled) {
       const socket = this.createTlsSocket();
@@ -183,6 +357,9 @@ export class FluentSocket extends EventEmitter {
     }
   }
 
+  /**
+   * Sets up the socket to be opened
+   */
   private openSocket(): void {
     this.state = SocketState.CONNECTING;
     this.socket = this.createSocket(() => this.handleConnect());
@@ -199,6 +376,9 @@ export class FluentSocket extends EventEmitter {
     this.processMessages(protocol.decodeServerStream(this.passThroughStream));
   }
 
+  /**
+   * Called once the socket is connected
+   */
   private handleConnect(): void {
     this.connectAttempts = 0;
     this.state = SocketState.CONNECTED;
@@ -206,6 +386,12 @@ export class FluentSocket extends EventEmitter {
     this.onConnected();
   }
 
+  /**
+   * Processes messages from the socket
+   *
+   * @param iterable The socket read data stream
+   * @returns Promise for when parsing completes
+   */
   private async processMessages(
     iterable: AsyncIterable<protocol.ServerMessage>
   ): Promise<void> {
@@ -214,14 +400,21 @@ export class FluentSocket extends EventEmitter {
         this.onMessage(message);
       }
     } catch (e) {
-      this.close(CloseState.FATAL, e);
+      this.close(CloseState.CLOSE, e);
     }
   }
 
+  /**
+   * Called from an error event on the socket
+   */
   private handleError(error: Error): void {
     this.onError(error);
   }
 
+  /**
+   * Called when the socket times out
+   * Should suspend the socket (set it to IDLE)
+   */
   private handleTimeout(): void {
     if (this.socket !== null && isConnected(this.state)) {
       this.state = SocketState.IDLE;
@@ -234,6 +427,11 @@ export class FluentSocket extends EventEmitter {
     }
   }
 
+  /**
+   * Called from a "close" event on the socket
+   *
+   * Should clean up the state, and potentially trigger a reconnect
+   */
   private handleClose(): void {
     if (this.state === SocketState.CONNECTING) {
       // If we never got to the CONNECTED stage
@@ -261,6 +459,9 @@ export class FluentSocket extends EventEmitter {
     }
   }
 
+  /**
+   * Called when the socket has fully drained, and the buffers are free again
+   */
   private handleDrain(): void {
     // We may not have noticed that we were draining, or we may have moved to a different state in the mean time
     if (this.state === SocketState.DRAINING) {
@@ -342,13 +543,13 @@ export class FluentSocket extends EventEmitter {
       } else {
         this.close(
           CloseState.CLOSE,
-          new ResponseError("Received unexpected message")
+          new UnexpectedMessageError("Received unexpected message")
         );
       }
     } else {
       this.close(
         CloseState.CLOSE,
-        new ResponseError("Received unexpected message")
+        new UnexpectedMessageError("Received unexpected message")
       );
     }
   }

@@ -11,7 +11,7 @@ Built upon [fluent-logger-node](https://github.com/fluent/fluent-logger-node).
 
     $ npm install fluentd-node
 
-## Prerequistes
+## Prerequisites
 
 The fluent daemon should be listening on a TCP port.
 

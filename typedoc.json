@@ -1,0 +1,9 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "theme": "minimal",
+  "out": "docs",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "sort": ["visibility", "source-order"],
+  "toc": ["FluentClient", "FluentServer", "EventTime", "FluentError"]
+}

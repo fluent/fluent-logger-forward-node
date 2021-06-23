@@ -127,7 +127,7 @@ describe("FluentSocket", () => {
     sinon.assert.calledOnce(connectStub);
 
     socket.on("error", (error: Error) => {
-      expect(error.name).to.equal("ResponseError");
+      expect(error.name).to.equal("UnexpectedMessageError");
       expect(stream.socket.destroyed).to.be.true;
       done();
     });

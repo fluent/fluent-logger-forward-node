@@ -1,14 +1,49 @@
 import {DroppedError} from "./error";
 
+/**
+ * Event retry settings
+ *
+ * The parameters represent an exponential backoff formula:
+ * min(maxDelay, max(minDelay, backoff^attempts * delay))
+ */
 export type EventRetryOptions = {
+  /**
+   * How often we retry each event
+   *
+   * Defaults to 4
+   */
   attempts: number;
+  /**
+   * The backoff factor for each attempt
+   *
+   * Defaults to 2
+   */
   backoff: number;
+  /**
+   * The delay factor for each attempt
+   *
+   * Defaults to 100
+   */
   delay: number;
+  /**
+   * The global minimum delay
+   */
   minDelay: number;
+  /**
+   * The global maximum delay
+   */
   maxDelay: number;
+  /**
+   * Called with each error
+   *
+   * Can be used for logging, or if the error is non-retryable, this callback can `throw` the error to short circuit the callback.
+   */
   onError: (err: Error) => void;
 };
 
+/**
+ * Provides retry logic for a promise, with failure cases
+ */
 export class EventRetrier {
   private options: EventRetryOptions;
   constructor(opts: Partial<EventRetryOptions> = {}) {
@@ -23,6 +58,13 @@ export class EventRetrier {
     };
   }
 
+  /**
+   * Retry the promise
+   *
+   * Attempts the promise in an infinite loop, and retries according to the logic in EventRetryOptions
+   * @param makePromise An async function to retry
+   * @returns A Promise which succeeds if the async function succeeds, or has exhausted retry attempts
+   */
   public async retryPromise<T>(makePromise: () => Promise<T>): Promise<T> {
     let retryAttempts = 0;
     do {

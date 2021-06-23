@@ -9,20 +9,33 @@ type EventRecord = {
   deferred: pDefer.DeferredPromise<void>;
 };
 
+/**
+ * Implements the Forward specification's [Message mode](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#message-modes)
+ */
 export class MessageQueue extends Queue {
+  /**
+   * Maintain the queue as a Set
+   *
+   * JS guarantees sets are insertion ordered, so calling sendQueue.values().next.value will be the first entry to be inserted.
+   */
   private sendQueue: Set<EventRecord> = new Set();
 
-  // Size is not measured for this queue
+  /**
+   * Size is not measured for this queue
+   */
   get queueSize(): number {
     return -1;
   }
 
+  /**
+   * The length of the queue
+   */
   get queueLength(): number {
     return this.sendQueue.size;
   }
 
   public push(
-    tag: string,
+    tag: protocol.Tag,
     time: protocol.Time,
     event: protocol.EventRecord
   ): Promise<void> {
@@ -36,7 +49,7 @@ export class MessageQueue extends Queue {
     return deferred.promise;
   }
 
-  public pop(): EventRecord | null {
+  protected pop(): EventRecord | null {
     if (this.sendQueue.size === 0) {
       return null;
     }

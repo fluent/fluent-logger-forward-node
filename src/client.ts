@@ -20,40 +20,129 @@ import {DeferredPromise} from "p-defer";
 import * as crypto from "crypto";
 import {EventRetrier, EventRetryOptions} from "./event_retrier";
 
-type EventModes =
-  | "Message"
-  | "Forward"
-  | "PackedForward"
-  | "CompressedPackedForward";
-
-type Timestamp = number | Date | EventTime;
-
-type AckOptions = {
-  ackTimeout: number;
-};
-
 type AckData = {
   timeoutId: NodeJS.Timeout;
   deferred: DeferredPromise<void>;
 };
 
+/**
+ * The set of accepted event modes. See [Forward protocol spec](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#event-modes)
+ *
+ * `Message` will send each event to FluentD individually.
+ *
+ * `Forward` will collect the events together by tag, and send them together to FluentD in a single packet.
+ * This is more efficient with a `flushInterval` to batch these together.
+ *
+ * `PackedForward` will behave the same as `Forward`, but will pack the events as part of entering the queue. This saves memory and bandwidth.
+ *
+ * `CompressedPackedForward` will behave the same as `PackedForward`, but additionally compress the items before emission, saving more bandwidth.
+ */
+export type EventModes =
+  | "Message"
+  | "Forward"
+  | "PackedForward"
+  | "CompressedPackedForward";
+
+/**
+ * The set of accepted Timestamp values
+ */
+export type Timestamp = number | Date | EventTime;
+
+/**
+ * Acknowledgement settings
+ */
+export type AckOptions = {
+  /**
+   * How long to wait for an acknowledgement from the server
+   */
+  ackTimeout: number;
+};
+
+/**
+ * The constructor options passed to the client
+ */
 export type FluentClientOptions = {
+  /**
+   * The event mode to use. Defaults to PackedForward
+   */
   eventMode?: EventModes;
+  /**
+   * The connection options. See subtype for defaults.
+   */
   socket?: FluentSocketOptions;
+  /**
+   * The fluentd security options. See subtype for defaults.
+   */
   security?: FluentAuthOptions;
+  /**
+   * Acknowledgement settings.
+   */
   ack?: Partial<AckOptions>;
+  /**
+   * How long to wait to flush the queued events
+   *
+   * Defaults to 0
+   */
   flushInterval?: number;
+  /**
+   * The timestamp resolution of events passed to FluentD.
+   *
+   * Defaults to false (seconds). If true, the resolution will be in milliseconds
+   */
   milliseconds?: boolean;
+  /**
+   * The limit at which the queue needs to be flushed.
+   *
+   * This checks the memory size of the queue, which is only useful with `PackedForward` and `PackedForwardCompressed`.
+   *
+   * Useful with flushInterval to limit the size of the queue
+   */
   sendQueueFlushSize?: number;
+  /**
+   * The limit at which the queue needs to be flushed.
+   *
+   * This checks the number of events in the queue, which is useful with all event modes.
+   *
+   * Useful with flushInterval to limit the size of the queue
+   */
   sendQueueFlushLength?: number;
+  /**
+   * The limit at which we start dropping events
+   *
+   * This checks the memory size of the queue, which is only useful with `PackedForward` and `PackedForwardCompressed`.
+   *
+   * Prevents the queue from growing to an unbounded size and exhausting memory.
+   */
   sendQueueMaxSize?: number;
+  /**
+   * The limit at which we start dropping events
+   *
+   * This checks the number of events in the queue, which is useful with all event modes.
+   *
+   * Prevents the queue from growing to an unbounded size and exhausting memory.
+   */
   sendQueueMaxLength?: number;
+  /**
+   * An error handler which will receive socket error events
+   *
+   * Useful for logging, these will be handled internally
+   */
   onSocketError?: (err: Error) => void;
+  /**
+   * Retry event submission on failure
+   *
+   * Warning: This effectively keeps the event in memory until it is successfully sent or retries exhausted
+   *
+   * See subtype for defaults
+   */
   eventRetry?: Partial<EventRetryOptions>;
 };
 
+/**
+ * A Fluent Client. Connects to a FluentD server using the [Forward protocol](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1).
+ */
 export class FluentClient {
-  private tag_prefix: string;
+  private tag_prefix: string | null;
   private eventMode: EventModes;
   private ackEnabled: boolean;
   private ackOptions: AckOptions;
@@ -75,7 +164,16 @@ export class FluentClient {
   private flushing = false;
   private willFlushNextTick: Promise<boolean> | null = null;
 
-  constructor(tag_prefix: string, options: FluentClientOptions = {}) {
+  /**
+   * Creates a new FluentClient
+   *
+   * @param tag_prefix A prefix to prefix to all tags. For example, passing the prefix "foo" will cause `emit("bar", data)` to emit with `foo.bar`.
+   * @param options The client options
+   */
+  constructor(
+    tag_prefix: string | null = null,
+    options: FluentClientOptions = {}
+  ) {
     options = options || {};
     this.eventMode = options.eventMode || "PackedForward";
     if (this.eventMode === "Message") {
@@ -105,10 +203,8 @@ export class FluentClient {
     this.flushInterval = options.flushInterval || 0;
     this.sendQueueFlushSize = options.sendQueueFlushSize || +Infinity;
     this.sendQueueFlushLength = options.sendQueueFlushLength || +Infinity;
-    this.sendQueueMaxSize =
-      options.sendQueueMaxSize || 2 * this.sendQueueFlushSize;
-    this.sendQueueMaxLength =
-      options.sendQueueMaxLength || 2 * this.sendQueueFlushSize;
+    this.sendQueueMaxSize = options.sendQueueMaxSize || +Infinity;
+    this.sendQueueMaxLength = options.sendQueueMaxLength || +Infinity;
 
     this.socket = this.createSocket(options.security, options.socket);
 
@@ -121,6 +217,13 @@ export class FluentClient {
     this.connect();
   }
 
+  /**
+   * Constructs a new socket
+   *
+   * @param security The security options, if any
+   * @param options The socket options, if any
+   * @returns A new FluentSocket
+   */
   private createSocket(
     security?: FluentAuthOptions,
     options?: FluentSocketOptions
@@ -132,9 +235,41 @@ export class FluentClient {
     }
   }
 
+  /**
+   * Emits an event to the Fluent Server
+   *
+   * @param data The event to emit (required)
+   * @returns A Promise, which resolves when the event is successfully sent to the server.
+   *  Enabling acknowledgements waits until the server indicates they have received the event.
+   */
   emit(data: protocol.EventRecord): Promise<void>;
+  /**
+   * Emits an event to the Fluent Server
+   *
+   * @param data The event to emit (required)
+   * @param timestamp The timestamp of the event (optional)
+   * @returns A Promise, which resolves when the event is successfully sent to the server.
+   *  Enabling acknowledgements waits until the server indicates they have received the event.
+   */
   emit(data: protocol.EventRecord, timestamp: Timestamp): Promise<void>;
+  /**
+   * Emits an event to the Fluent Server
+   *
+   * @param label The label to emit the data with (optional)
+   * @param data The event to emit (required)
+   * @returns A Promise, which resolves when the event is successfully sent to the server.
+   *  Enabling acknowledgements waits until the server indicates they have received the event.
+   */
   emit(label: string, data: protocol.EventRecord): Promise<void>;
+  /**
+   * Emits an event to the Fluent Server
+   *
+   * @param label The label to emit the data with (optional)
+   * @param data The event to emit (required)
+   * @param timestamp The timestamp of the event (optional)
+   * @returns A Promise, which resolves when the event is successfully sent to the server.
+   *  Enabling acknowledgements waits until the server indicates they have received the event.
+   */
   emit(
     label: string,
     data: protocol.EventRecord,
@@ -204,13 +339,23 @@ export class FluentClient {
       time = timestamp;
     }
     if (this.retrier !== null) {
-      return this.retrier.retryPromise(() => this.sendEvent(tag, time, data));
+      return this.retrier.retryPromise(() => this.pushEvent(tag, time, data));
     } else {
-      return this.sendEvent(tag, time, data);
+      return this.pushEvent(tag, time, data);
     }
   }
 
-  private sendEvent(
+  /**
+   * Pushes an event onto the sendQueue
+   *
+   * Also drops items from the queue if it is too large (size/length)
+   *
+   * @param tag The event tag
+   * @param time The event timestamp
+   * @param data The event data
+   * @returns The promise from the sendQueue
+   */
+  private pushEvent(
     tag: protocol.Tag,
     time: protocol.Time,
     data: protocol.EventRecord
@@ -230,10 +375,18 @@ export class FluentClient {
     return promise;
   }
 
+  /**
+   * Called once the underlying socket is writable
+   *
+   * Should attempt a flush
+   */
   private handleWritable() {
     this.maybeFlush();
   }
 
+  /**
+   * Connects the client. Happens automatically during construction, but can be called after a `disconnect()` to resume the client.
+   */
   public connect() {
     this.socket.connect();
   }
@@ -266,6 +419,12 @@ export class FluentClient {
     }
   }
 
+  /**
+   * Creates a tag from the passed label and the constructor `tagPrefix`.
+   *
+   * @param label The label to create a tag from
+   * @returns The constructed tag, or `null`.
+   */
   private makeTag(label: string | null): string | null {
     let tag = null;
     if (this.tag_prefix && label) {
@@ -278,6 +437,12 @@ export class FluentClient {
     return tag;
   }
 
+  /**
+   * Flushes to the socket internally
+   *
+   * Managed by `flush` to not be called multiple times
+   * @returns true if there are more events in the queue to flush, false otherwise
+   */
   private innerFlush(): boolean {
     if (this.sendQueue.queueLength === 0) {
       return false;
@@ -304,6 +469,11 @@ export class FluentClient {
     return availableEvents;
   }
 
+  /**
+   * Flushes the event queue. Queues up the flushes for the next tick, preventing multiple flushes at the same time.
+   *
+   * @returns A promise, which resolves with a boolean indicating if there are more events to flush.
+   */
   public flush(): Promise<boolean> {
     // Prevent duplicate flushes next tick
     if (this.willFlushNextTick === null) {
@@ -317,6 +487,14 @@ export class FluentClient {
     return this.willFlushNextTick;
   }
 
+  /**
+   * Potentially triggers a flush
+   *
+   * If we're flushing on an interval, check if the queue (size/length) limits have been reached, and otherwise schedule a new flush
+   *
+   * If not, just flush
+   * @returns
+   */
   private maybeFlush(): void {
     // nothing to flush
     if (this.sendQueue.queueLength === 0) {
@@ -352,6 +530,10 @@ export class FluentClient {
     }
   }
 
+  /**
+   * Send the front item of the queue to the socket
+   * @returns True if there was something to send
+   */
   private sendNext(): boolean {
     let chunk: protocol.Chunk | undefined;
     if (this.ackEnabled) {
@@ -395,19 +577,34 @@ export class FluentClient {
     return true;
   }
 
+  /**
+   * Creates an event for how long to wait for the ack
+   *
+   * @param chunkId The chunk ID we're waiting to ack
+   * @param deferred The deferred to reject on timeout
+   * @param ackTimeout The timeout length
+   * @returns
+   */
   private setupAckTimeout(
     chunkId: string,
     deferred: DeferredPromise<void>,
     ackTimeout: number
   ): NodeJS.Timeout {
     return setTimeout(() => {
+      // If the chunk isn't in the queue, then we must have removed it somewhere, assume that it didn't time out
       if (this.ackQueue.has(chunkId)) {
+        deferred.reject(new AckTimeoutError("ack response timeout"));
         this.ackQueue.delete(chunkId);
       }
-      deferred.reject(new AckTimeoutError("ack response timeout"));
     }, ackTimeout);
   }
 
+  /**
+   * Called on an acknowledgement from the socket
+   *
+   * @param chunkId The chunk ID the socket has acknowledged
+   * @returns
+   */
   private handleAck(chunkId: string): void {
     if (!this.ackQueue.has(chunkId)) {
       // Timed out or socket shut down fully before this event could be processed
@@ -421,6 +618,10 @@ export class FluentClient {
     }
   }
 
+  /**
+   * Fails all acknowledgements
+   * Called on shutdown
+   */
   private clearAcks(): void {
     for (const data of this.ackQueue.values()) {
       clearTimeout(data.timeoutId);

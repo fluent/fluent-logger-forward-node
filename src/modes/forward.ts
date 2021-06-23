@@ -5,15 +5,29 @@ import * as protocol from "../protocol";
 type ForwardRecord = {
   tag: protocol.Tag;
   entries: protocol.Entry[];
-  size: number;
   deferred: pDefer.DeferredPromise<void>;
 };
 
+/**
+ * Implements the Forward specification's [Forward mode](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#forward-mode)
+ */
 export class ForwardQueue extends Queue {
+  /**
+   * Maintain the queue as a Map
+   *
+   * JS guarantees maps are insertion ordered, so calling sendQueue.values().next.value will be the first tag to be inserted.
+   */
   private sendQueue: Map<protocol.Tag, ForwardRecord> = new Map();
+  /**
+   * The total number of events stored within the queue
+   *
+   * Note that this isn't just sendQueue.size because each entry in the map can have multiple events
+   */
   private sendQueueLength = 0;
 
-  // Size is not measured for this queue
+  /**
+   * Size is not measured for this queue
+   */
   get queueSize(): number {
     return -1;
   }
@@ -23,7 +37,7 @@ export class ForwardQueue extends Queue {
   }
 
   public push(
-    tag: string,
+    tag: protocol.Tag,
     time: protocol.Time,
     data: protocol.EventRecord
   ): Promise<void> {
@@ -32,14 +46,12 @@ export class ForwardQueue extends Queue {
     if (this.sendQueue.has(tag)) {
       const entryData = this.sendQueue.get(tag) as ForwardRecord;
       entryData.entries.push(entry);
-      entryData.size += entry.length;
       return entryData.deferred.promise;
     } else {
       const deferred = pDefer<void>();
       this.sendQueue.set(tag, {
         tag,
         entries: [entry],
-        size: entry.length,
         deferred: deferred,
       });
       return deferred.promise;
