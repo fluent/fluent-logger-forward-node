@@ -10,6 +10,7 @@ export type {
   Timestamp,
   AckOptions,
   EventModes,
+  SendQueueLimit,
 } from "./client";
 
 export type {FluentServerOptions, FluentServerSecurityOptions} from "./server";
