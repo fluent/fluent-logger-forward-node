@@ -8,17 +8,17 @@ Built upon [fluent-logger-node](https://github.com/fluent/fluent-logger-node).
 
 [![NPM](https://nodei.co/npm/fluentd-node.png?downloads=true&downloadRank=true)](https://nodei.co/npm/fluentd-node/)
 
-
 ## Install
 
     $ npm install fluentd-node
 
-## Prerequisites
+## Client
+`fluentd-node` has a fully functional client that implements the Forward protocol. It supports reconnection, acknowledgements, timeouts, event retries, and more, and exposes its functionality through simple typed Promise interface.
 
-The fluent daemon should be listening on a TCP port.
+### Prerequisites
+The fluent daemon should be listening in forward mode.
 
-Simple configuration is following:
-
+A simple starting configuration is the following:
 ```aconf
 <source>
   @type forward
@@ -30,9 +30,9 @@ Simple configuration is following:
 </match>
 ```
 
-## Usage
+See the [FluentD docs](https://docs.fluentd.org/input/forward) for more info.
 
-### Send an event record to Fluentd
+### Sending an event record to Fluentd
 
 ```js
 const FluentClient = require("fluentd-node").FluentClient;
@@ -171,7 +171,7 @@ Server configuration:
 </match>
 ```
 
-FYI: You can generate certificates using fluent-ca-generate command since Fluentd 1.1.0.
+FYI: You can generate certificates using the `fluent-ca-generate` command since Fluentd 1.1.0.
 
 See also [How to enable TLS/SSL encryption](https://docs.fluentd.org/input/forward#how-to-enable-tls-encryption).
 
@@ -225,7 +225,7 @@ Server configuration:
 
 ### EventTime support
 
-We can also specify [EventTime](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format) as timestamp.
+We can also specify [EventTime](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format) as timestamp. See the [EventTime docs](https://jamiees2.github.io/fluentd-node/classes/eventtime.html)
 
 ```js
 const FluentClient = require("fluentd-node").FluentClient;
@@ -248,7 +248,7 @@ The Fluent client will manage errors internally, and reject promises on errors. 
 const FluentClient = require("fluentd-node").FluentClient;
 const logger = new FluentClient("tag_prefix", {
   onSocketError: (err: Error) => {
-    console.log("error!", err)
+    console.error("error!", err)
   }
 });
 ```
