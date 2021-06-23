@@ -7,14 +7,15 @@ jobs:
     environment: release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+
       - uses: actions/setup-node@v1
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
 
       - name: Install deps
-        run: yarn install
+        run: yarn install --frozen-lockfile
 
       - name: Version
         run: yarn version --new-version "${GITHUB_REF:11}" --no-git-tag-version

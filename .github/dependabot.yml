@@ -1,0 +1,16 @@
+version: 2
+updates:
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+    interval: "daily"
+  labels:
+  - "Actions"
+  commit-message:
+    prefix: ci
+- package-ecosystem: "yarn"
+  directory: "/"
+  schedule:
+    interval: "daily"
+  labels:
+  - "npm"
