@@ -97,6 +97,26 @@ describe("FluentClient", () => {
       await client.emit({event: "foo"}, EventTime.now());
     });
 
+    it("should convert timestamps to EventTime when using milliseconds", async () => {
+      const {client} = createFluentClient("test", {milliseconds: true});
+      const spy = sinon.spy(client, <any>"pushEvent");
+      const customTimestamp = Math.floor(Date.now() * 1.45);
+      const customDate = new Date(2009, 11, 11);
+      await client.emit({event: "foo"}, customTimestamp);
+      await client.emit({event: "foo"}, customDate);
+
+      sinon.assert.calledTwice(spy);
+      expect(spy.firstCall.args[1]).to.be.instanceOf(EventTime);
+      expect(spy.secondCall.args[1]).to.be.instanceOf(EventTime);
+
+      expect(spy.firstCall.args[1].epoch).to.equal(
+        Math.floor(customTimestamp / 1000)
+      );
+      expect(spy.secondCall.args[1].epoch).to.equal(
+        Math.floor(customDate.getTime() / 1000)
+      );
+    });
+
     it("should limit queue size", async () => {
       const {client, socket} = createFluentClient("test", {
         sendQueueMaxLimit: {
@@ -233,7 +253,6 @@ describe("FluentClient", () => {
 
         await new Promise(r => setTimeout(r, timeout * 2));
 
-        console.log("HERE");
         expect(firstEvent).to.not.be.fulfilled;
         expect(secondEvent).to.not.be.fulfilled;
 
