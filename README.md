@@ -264,7 +264,7 @@ const logger = new FluentClient("tag_prefix", {
 });
 ```
 
-### Server
+## Server
 `fluentd-node` includes a fully functional forward server which can be used as a downstream Fluent sink. 
 
 ```js
