@@ -99,7 +99,9 @@ describe("FluentClient", () => {
 
     it("should limit queue size", async () => {
       const {client, socket} = createFluentClient("test", {
-        sendQueueMaxSize: 20,
+        sendQueueMaxLimit: {
+          size: 20,
+        },
       });
       socket.isWritable = false;
       const expectation = expect(
@@ -115,7 +117,9 @@ describe("FluentClient", () => {
     it("should limit queue length", async () => {
       const {client, socket} = createFluentClient("test", {
         eventMode: "Message",
-        sendQueueMaxLength: 1,
+        sendQueueMaxLimit: {
+          length: 1,
+        },
       });
       socket.isWritable = false;
       const expectation = expect(
@@ -128,10 +132,34 @@ describe("FluentClient", () => {
       await secondEvent;
     });
 
+    it("should limit queue length when not flushable", async () => {
+      const {client, socket} = createFluentClient("test", {
+        eventMode: "Message",
+        sendQueueNotFlushableLimit: {
+          length: 1,
+        },
+      });
+      socket.isWritable = false;
+
+      const expectation = expect(
+        client.emit("a", {event: "foo bar"})
+      ).to.eventually.be.rejectedWith(DroppedError);
+      const secondEvent = client.emit("b", {event: "lorem"});
+
+      await expectation;
+
+      socket.isWritable = true;
+      socket.emit("writable");
+
+      await secondEvent;
+    });
+
     describe("when flush interval is provided", () => {
       it("should trigger flush after emit if queue is too large (size)", async () => {
         const {client} = createFluentClient("test", {
-          sendQueueFlushSize: 20,
+          sendQueueFlushLimit: {
+            size: 20,
+          },
           flushInterval: 600000 /* 10 minutes */,
         });
         const firstEvent = client.emit("a", {event: "foo bar"});
@@ -148,7 +176,9 @@ describe("FluentClient", () => {
       it("should trigger flush after emit if queue is too large (length)", async () => {
         const {client} = createFluentClient("test", {
           eventMode: "Message",
-          sendQueueFlushLength: 2,
+          sendQueueFlushLimit: {
+            length: 2,
+          },
           flushInterval: 600000 /* 10 minutes */,
         });
         const firstEvent = client.emit("a", {event: "foo bar"});
