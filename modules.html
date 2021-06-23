@@ -2732,11 +2732,15 @@ img {
 			</a>
 			<pre><code><span style="color: #001080">$</span><span style="color: #000000"> </span><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">install</span><span style="color: #000000"> </span><span style="color: #001080">fluentd</span><span style="color: #000000">-</span><span style="color: #001080">node</span>
 </code></pre>
-			<a href="#prerequisites" id="prerequisites" style="color: inherit; text-decoration: none;">
-				<h2>Prerequisites</h2>
+			<a href="#client" id="client" style="color: inherit; text-decoration: none;">
+				<h2>Client</h2>
 			</a>
-			<p>The fluent daemon should be listening on a TCP port.</p>
-			<p>Simple configuration is following:</p>
+			<p><code>fluentd-node</code> has a fully functional client that implements the Forward protocol. It supports reconnection, acknowledgements, timeouts, event retries, and more, and exposes its functionality through simple typed Promise interface.</p>
+			<a href="#prerequisites" id="prerequisites" style="color: inherit; text-decoration: none;">
+				<h3>Prerequisites</h3>
+			</a>
+			<p>The fluent daemon should be listening in forward mode.</p>
+			<p>A simple starting configuration is the following:</p>
 			<pre><code class="language-aconf">&lt;source&gt;
   @type forward
   port 24224
@@ -2746,11 +2750,9 @@ img {
   @type stdout
 &lt;/match&gt;
 </code></pre>
-			<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
-				<h2>Usage</h2>
-			</a>
-			<a href="#send-an-event-record-to-fluentd" id="send-an-event-record-to-fluentd" style="color: inherit; text-decoration: none;">
-				<h3>Send an event record to Fluentd</h3>
+			<p>See the <a href="https://docs.fluentd.org/input/forward">FluentD docs</a> for more info.</p>
+			<a href="#sending-an-event-record-to-fluentd" id="sending-an-event-record-to-fluentd" style="color: inherit; text-decoration: none;">
+				<h3>Sending an event record to Fluentd</h3>
 			</a>
 			<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">FluentClient</span><span style="color: #000000"> = </span><span style="color: #795E26">require</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;fluentd-node&quot;</span><span style="color: #000000">).</span><span style="color: #001080">FluentClient</span><span style="color: #000000">;</span>
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">logger</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">FluentClient</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;tag_prefix&quot;</span><span style="color: #000000">, {</span>
@@ -2868,7 +2870,7 @@ img {
   @type stdout
 &lt;/match&gt;
 </code></pre>
-			<p>FYI: You can generate certificates using fluent-ca-generate command since Fluentd 1.1.0.</p>
+			<p>FYI: You can generate certificates using the <code>fluent-ca-generate</code> command since Fluentd 1.1.0.</p>
 			<p>See also <a href="https://docs.fluentd.org/input/forward#how-to-enable-tls-encryption">How to enable TLS/SSL encryption</a>.</p>
 			<a href="#mutual-tls-authentication" id="mutual-tls-authentication" style="color: inherit; text-decoration: none;">
 				<h3>Mutual TLS Authentication</h3>
@@ -2916,7 +2918,7 @@ img {
 			<a href="#eventtime-support" id="eventtime-support" style="color: inherit; text-decoration: none;">
 				<h3>EventTime support</h3>
 			</a>
-			<p>We can also specify <a href="https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format">EventTime</a> as timestamp.</p>
+			<p>We can also specify <a href="https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format">EventTime</a> as timestamp. See the <a href="https://jamiees2.github.io/fluentd-node/classes/eventtime.html">EventTime docs</a></p>
 			<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">FluentClient</span><span style="color: #000000"> = </span><span style="color: #795E26">require</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;fluentd-node&quot;</span><span style="color: #000000">).</span><span style="color: #001080">FluentClient</span><span style="color: #000000">;</span>
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">EventTime</span><span style="color: #000000"> = </span><span style="color: #795E26">require</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;fluentd-node&quot;</span><span style="color: #000000">).</span><span style="color: #001080">EventTime</span><span style="color: #000000">;</span>
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">eventTime</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">EventTime</span><span style="color: #000000">(</span><span style="color: #098658">1489547207</span><span style="color: #000000">, </span><span style="color: #098658">745003500</span><span style="color: #000000">); </span><span style="color: #008000">// 2017-03-15 12:06:47 +0900</span>
@@ -2936,7 +2938,7 @@ img {
 			<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">FluentClient</span><span style="color: #000000"> = </span><span style="color: #795E26">require</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;fluentd-node&quot;</span><span style="color: #000000">).</span><span style="color: #001080">FluentClient</span><span style="color: #000000">;</span>
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">logger</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">FluentClient</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;tag_prefix&quot;</span><span style="color: #000000">, {</span>
 <span style="color: #000000">  </span><span style="color: #795E26">onSocketError</span><span style="color: #001080">:</span><span style="color: #000000"> (</span><span style="color: #001080">err</span><span style="color: #000000">: </span><span style="color: #267F99">Error</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> {</span>
-<span style="color: #000000">    </span><span style="color: #001080">console</span><span style="color: #000000">.</span><span style="color: #795E26">log</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;error!&quot;</span><span style="color: #000000">, </span><span style="color: #001080">err</span><span style="color: #000000">)</span>
+<span style="color: #000000">    </span><span style="color: #001080">console</span><span style="color: #000000">.</span><span style="color: #795E26">error</span><span style="color: #000000">(</span><span style="color: #A31515">&quot;error!&quot;</span><span style="color: #000000">, </span><span style="color: #001080">err</span><span style="color: #000000">)</span>
 <span style="color: #000000">  }</span>
 <span style="color: #000000">});</span>
 </code></pre>
@@ -3037,7 +3039,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Fluent<wbr>Auth<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>clientHostname<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>sharedKey<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>username<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>password<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/697e639/src/auth.ts#L9">src/auth.ts:9</a></li>
+						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/3d0206c/src/auth.ts#L9">src/auth.ts:9</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -3090,7 +3092,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Event<wbr>Modes<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">&quot;Message&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;Forward&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;PackedForward&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;CompressedPackedForward&quot;</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/697e639/src/client.ts#L40">src/client.ts:40</a></li>
+						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/3d0206c/src/client.ts#L40">src/client.ts:40</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -3110,7 +3112,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Timestamp<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Date</span><span class="tsd-signature-symbol"> | </span><a href="classes/eventtime.html" class="tsd-signature-type" data-tsd-kind="Class">EventTime</a></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/697e639/src/client.ts#L49">src/client.ts:49</a></li>
+						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/3d0206c/src/client.ts#L49">src/client.ts:49</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -3125,7 +3127,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Ack<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>ackTimeout<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/697e639/src/client.ts#L54">src/client.ts:54</a></li>
+						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/3d0206c/src/client.ts#L54">src/client.ts:54</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -3153,7 +3155,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Fluent<wbr>Client<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>eventMode<span class="tsd-signature-symbol">?: </span><a href="modules.html#eventmodes" class="tsd-signature-type" data-tsd-kind="Type alias">EventModes</a><span class="tsd-signature-symbol">; </span>socket<span class="tsd-signature-symbol">?: </span><a href="modules.html#fluentsocketoptions" class="tsd-signature-type" data-tsd-kind="Type alias">FluentSocketOptions</a><span class="tsd-signature-symbol">; </span>security<span class="tsd-signature-symbol">?: </span><a href="modules.html#fluentauthoptions" class="tsd-signature-type" data-tsd-kind="Type alias">FluentAuthOptions</a><span class="tsd-signature-symbol">; </span>ack<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#ackoptions" class="tsd-signature-type" data-tsd-kind="Type alias">AckOptions</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span>flushInterval<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>milliseconds<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>sendQueueFlushLimit<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">SendQueueLimit</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span>sendQueueMaxLimit<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">SendQueueLimit</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span>sendQueueNotFlushableLimit<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">SendQueueLimit</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span>onSocketError<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-symbol">(</span>err<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">; </span>eventRetry<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#eventretryoptions" class="tsd-signature-type" data-tsd-kind="Type alias">EventRetryOptions</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> }</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/697e639/src/client.ts#L83">src/client.ts:83</a></li>
+						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/3d0206c/src/client.ts#L83">src/client.ts:83</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -3291,7 +3293,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Event<wbr>Retry<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>attempts<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>backoff<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>delay<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>minDelay<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>maxDelay<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>onError<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>err<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol"> }</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/697e639/src/event_retrier.ts#L9">src/event_retrier.ts:9</a></li>
+						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/3d0206c/src/event_retrier.ts#L9">src/event_retrier.ts:9</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -3383,7 +3385,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Fluent<wbr>Server<wbr>Security<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>serverHostname<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>sharedKey<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>authorize<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>userDict<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> }</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/697e639/src/server.ts#L38">src/server.ts:38</a></li>
+						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/3d0206c/src/server.ts#L38">src/server.ts:38</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -3435,7 +3437,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Fluent<wbr>Server<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>security<span class="tsd-signature-symbol">?: </span><a href="modules.html#fluentserversecurityoptions" class="tsd-signature-type" data-tsd-kind="Type alias">FluentServerSecurityOptions</a><span class="tsd-signature-symbol">; </span>keepalive<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>tlsOptions<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">tls.TlsOptions</span><span class="tsd-signature-symbol">; </span>listenOptions<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">net.ListenOptions</span><span class="tsd-signature-symbol"> }</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/697e639/src/server.ts#L60">src/server.ts:60</a></li>
+						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/3d0206c/src/server.ts#L60">src/server.ts:60</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -3493,7 +3495,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Reconnect<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>backoff<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>delay<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>minDelay<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>maxDelay<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/697e639/src/socket.ts#L24">src/socket.ts:24</a></li>
+						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/3d0206c/src/socket.ts#L24">src/socket.ts:24</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -3552,7 +3554,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Fluent<wbr>Socket<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>path<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>host<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>port<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>timeout<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>tls<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">tls.ConnectionOptions</span><span class="tsd-signature-symbol">; </span>reconnect<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><a href="modules.html#reconnectoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ReconnectOptions</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span>disableReconnect<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> }</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/697e639/src/socket.ts#L47">src/socket.ts:47</a></li>
+						<li>Defined in <a href="https://github.com/jamiees2/fluentd-node/blob/3d0206c/src/socket.ts#L47">src/socket.ts:47</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-type-declaration">
