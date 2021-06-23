@@ -58,6 +58,25 @@ export type AckOptions = {
   ackTimeout: number;
 };
 
+export type SendQueueLimit = {
+  /**
+   * The queue size limit (memory)
+   *
+   * This checks the memory size of the queue, which is only useful with `PackedForward` and `PackedForwardCompressed`.
+   *
+   * Defaults to +Infinity
+   */
+  size: number;
+  /**
+   * The queue length limit (# of entries)
+   *
+   * This checks the number of events in the queue, which is useful with all event modes.
+   *
+   * Defaults to +Infinity
+   */
+  length: number;
+};
+
 /**
  * The constructor options passed to the client
  */
@@ -93,35 +112,30 @@ export type FluentClientOptions = {
   /**
    * The limit at which the queue needs to be flushed.
    *
-   * This checks the memory size of the queue, which is only useful with `PackedForward` and `PackedForwardCompressed`.
-   *
    * Useful with flushInterval to limit the size of the queue
-   */
-  sendQueueFlushSize?: number;
-  /**
-   * The limit at which the queue needs to be flushed.
    *
-   * This checks the number of events in the queue, which is useful with all event modes.
-   *
-   * Useful with flushInterval to limit the size of the queue
+   * See the subtype for defaults
    */
-  sendQueueFlushLength?: number;
+  sendQueueFlushLimit?: Partial<SendQueueLimit>;
+
   /**
    * The limit at which we start dropping events
    *
-   * This checks the memory size of the queue, which is only useful with `PackedForward` and `PackedForwardCompressed`.
-   *
    * Prevents the queue from growing to an unbounded size and exhausting memory.
+   *
+   * See the subtype for defaults
    */
-  sendQueueMaxSize?: number;
+  sendQueueMaxLimit?: Partial<SendQueueLimit>;
   /**
-   * The limit at which we start dropping events
+   * The limit at which we start dropping events when we're not writable
    *
-   * This checks the number of events in the queue, which is useful with all event modes.
+   * Prevents the queue from growing too much when fluentd is down for an extended period
    *
-   * Prevents the queue from growing to an unbounded size and exhausting memory.
+   * Defaults to null (no limit)
+   *
+   * See the subtype for defaults
    */
-  sendQueueMaxLength?: number;
+  sendQueueNotFlushableLimit?: Partial<SendQueueLimit>;
   /**
    * An error handler which will receive socket error events
    *
@@ -154,11 +168,9 @@ export class FluentClient {
   private socket: FluentSocket;
 
   private flushInterval: number;
-  private sendQueueFlushSize: number;
-  private sendQueueFlushLength: number;
-
-  private sendQueueMaxSize: number;
-  private sendQueueMaxLength: number;
+  private sendQueueFlushLimit: SendQueueLimit;
+  private sendQueueMaxLimit: SendQueueLimit;
+  private sendQueueNotFlushableLimit: SendQueueLimit | null;
 
   private nextFlushTimeoutId: null | NodeJS.Timeout = null;
   private flushing = false;
@@ -201,10 +213,23 @@ export class FluentClient {
     this.timeResolution = options.milliseconds ? 1 : 1000;
 
     this.flushInterval = options.flushInterval || 0;
-    this.sendQueueFlushSize = options.sendQueueFlushSize || +Infinity;
-    this.sendQueueFlushLength = options.sendQueueFlushLength || +Infinity;
-    this.sendQueueMaxSize = options.sendQueueMaxSize || +Infinity;
-    this.sendQueueMaxLength = options.sendQueueMaxLength || +Infinity;
+    this.sendQueueFlushLimit = {
+      size: +Infinity,
+      length: +Infinity,
+      ...(options.sendQueueFlushLimit || {}),
+    };
+    this.sendQueueMaxLimit = {
+      size: +Infinity,
+      length: +Infinity,
+      ...(options.sendQueueMaxLimit || {}),
+    };
+    this.sendQueueNotFlushableLimit = options.sendQueueNotFlushableLimit
+      ? {
+          size: +Infinity,
+          length: +Infinity,
+          ...options.sendQueueNotFlushableLimit,
+        }
+      : null;
 
     this.socket = this.createSocket(options.security, options.socket);
 
@@ -361,16 +386,7 @@ export class FluentClient {
     data: protocol.EventRecord
   ): Promise<void> {
     const promise = this.sendQueue.push(tag, time, data);
-    if (this.sendQueue.queueSize > this.sendQueueMaxSize) {
-      while (this.sendQueue.queueSize > this.sendQueueMaxSize) {
-        this.sendQueue.dropEntry();
-      }
-    }
-    if (this.sendQueue.queueLength > this.sendQueueMaxLength) {
-      while (this.sendQueue.queueLength > this.sendQueueMaxLength) {
-        this.sendQueue.dropEntry();
-      }
-    }
+    this.dropLimit(this.sendQueueMaxLimit);
     this.maybeFlush();
     return promise;
   }
@@ -502,19 +518,23 @@ export class FluentClient {
     }
     // can't flush
     if (!this.socket.writable()) {
+      if (this.sendQueueNotFlushableLimit) {
+        this.dropLimit(this.sendQueueNotFlushableLimit);
+      }
       return;
     }
     // flush on an interval
     if (this.flushInterval > 0) {
+      const limit = this.sendQueueFlushLimit;
       if (
         this.sendQueue.queueSize !== -1 &&
-        this.sendQueue.queueSize >= this.sendQueueFlushSize
+        this.sendQueue.queueSize >= limit.size
       ) {
         // If the queue has hit the memory flush limit
         this.flush();
       } else if (
         this.sendQueue.queueLength !== -1 &&
-        this.sendQueue.queueLength >= this.sendQueueFlushLength
+        this.sendQueue.queueLength >= limit.length
       ) {
         // If the queue has hit the length flush limit
         this.flush();
@@ -527,6 +547,24 @@ export class FluentClient {
     } else {
       // If we're not flushing on an interval, then try to flush on every emission
       this.flush();
+    }
+  }
+
+  /**
+   * Drops events until the send queue is below the specified limits
+   *
+   * @param limit The limit to enforce
+   */
+  private dropLimit(limit: SendQueueLimit): void {
+    if (this.sendQueue.queueSize > limit.size) {
+      while (this.sendQueue.queueSize > limit.size) {
+        this.sendQueue.dropEntry();
+      }
+    }
+    if (this.sendQueue.queueLength > limit.length) {
+      while (this.sendQueue.queueLength > limit.length) {
+        this.sendQueue.dropEntry();
+      }
     }
   }
 
