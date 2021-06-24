@@ -12,7 +12,7 @@ import {
   ConfigError,
   DataTypeError,
   DroppedError,
-  ShutdownError,
+  AckShutdownError,
 } from "../src/error";
 
 chai.use(chaiAsPromised);
@@ -176,6 +176,8 @@ describe("FluentClient", () => {
 
     describe("when flush interval is provided", () => {
       it("should trigger flush after emit if queue is too large (size)", async () => {
+        const clock = sandbox.useFakeTimers();
+        const setTimeoutSpy = sandbox.spy(clock, "setTimeout");
         const {client} = createFluentClient("test", {
           sendQueueFlushLimit: {
             size: 20,
@@ -185,15 +187,16 @@ describe("FluentClient", () => {
         const firstEvent = client.emit("a", {event: "foo bar"});
         const secondEvent = client.emit("b", {event: "lorem"});
 
-        await expect(
-          Promise.race([firstEvent, new Promise((_, r) => setTimeout(r, 100))])
-        ).to.eventually.be.fulfilled;
-        await expect(
-          Promise.race([secondEvent, new Promise((_, r) => setTimeout(r, 100))])
-        ).to.eventually.be.fulfilled;
+        await expect(firstEvent).to.eventually.be.fulfilled;
+        await expect(secondEvent).to.eventually.be.fulfilled;
+
+        // Should have called once for first event, and immediately flushed at second event
+        sinon.assert.calledOnce(setTimeoutSpy);
       });
 
       it("should trigger flush after emit if queue is too large (length)", async () => {
+        const clock = sandbox.useFakeTimers();
+        const setTimeoutSpy = sandbox.spy(clock, "setTimeout");
         const {client} = createFluentClient("test", {
           eventMode: "Message",
           sendQueueFlushLimit: {
@@ -204,15 +207,17 @@ describe("FluentClient", () => {
         const firstEvent = client.emit("a", {event: "foo bar"});
         const secondEvent = client.emit("b", {event: "lorem"});
 
-        await expect(
-          Promise.race([firstEvent, new Promise((_, r) => setTimeout(r, 100))])
-        ).to.eventually.be.fulfilled;
-        await expect(
-          Promise.race([secondEvent, new Promise((_, r) => setTimeout(r, 100))])
-        ).to.eventually.be.fulfilled;
+        await expect(firstEvent).to.eventually.be.fulfilled;
+        await expect(secondEvent).to.eventually.be.fulfilled;
+
+        // Should have called once for first event, and immediately flushed at second event
+        sinon.assert.calledOnce(setTimeoutSpy);
       });
 
       it("should setup flush event after emit", async () => {
+        const clock = sandbox.useFakeTimers();
+        const setTimeoutSpy = sandbox.spy(clock, "setTimeout");
+
         const timeout = 100;
         const {client} = createFluentClient("test", {
           flushInterval: timeout /* 100ms */,
@@ -223,10 +228,13 @@ describe("FluentClient", () => {
         const secondEvent = client.emit("b", {event: "lorem"});
 
         sinon.assert.notCalled(spy);
+        sinon.assert.calledOnce(setTimeoutSpy);
 
-        await new Promise(r => setTimeout(r, timeout / 2));
+        clock.tick(timeout / 2);
 
         sinon.assert.notCalled(spy);
+
+        clock.tick(timeout);
 
         await expect(firstEvent).to.eventually.be.fulfilled;
         await expect(secondEvent).to.eventually.be.fulfilled;
@@ -235,9 +243,12 @@ describe("FluentClient", () => {
       });
 
       it("should flush after setting up timeout and the socket not being flushable after timeout", async () => {
+        const clock = sandbox.useFakeTimers();
+        const setTimeoutSpy = sandbox.spy(clock, "setTimeout");
+
         const timeout = 50;
         const {client, socket} = createFluentClient("test", {
-          flushInterval: timeout /* 100ms */,
+          flushInterval: timeout,
         });
 
         const spy = sandbox.spy(client, <any>"innerFlush");
@@ -245,13 +256,16 @@ describe("FluentClient", () => {
         const secondEvent = client.emit("b", {event: "lorem"});
 
         sinon.assert.notCalled(spy);
+        sinon.assert.calledOnce(setTimeoutSpy);
 
-        await new Promise(r => setTimeout(r, timeout / 2));
+        clock.tick(timeout / 2);
 
         sinon.assert.notCalled(spy);
         socket.isWritable = false;
 
-        await new Promise(r => setTimeout(r, timeout * 2));
+        clock.tick(timeout * 2);
+        // wait for next tick
+        await new Promise(r => process.nextTick(r));
 
         expect(firstEvent).to.not.be.fulfilled;
         expect(secondEvent).to.not.be.fulfilled;
@@ -261,10 +275,16 @@ describe("FluentClient", () => {
         socket.isWritable = true;
         socket.emit("writable");
 
+        // wait for next tick
+        await new Promise(r => process.nextTick(r));
+
+        clock.tick(timeout * 2);
+
         await expect(firstEvent).to.eventually.be.fulfilled;
         await expect(secondEvent).to.eventually.be.fulfilled;
 
         sinon.assert.calledTwice(spy);
+        sinon.assert.calledTwice(setTimeoutSpy);
       });
     });
     describe("when no flush interval is provided", () => {
@@ -379,7 +399,9 @@ describe("FluentClient", () => {
 
         client.disconnect();
 
-        await expect(firstEvent).to.eventually.be.rejectedWith(ShutdownError);
+        await expect(firstEvent).to.eventually.be.rejectedWith(
+          AckShutdownError
+        );
       });
     });
     it("should return promise which is rejected on write error", async () => {

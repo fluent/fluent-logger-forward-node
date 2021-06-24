@@ -71,7 +71,7 @@ export class SocketNotWritableError extends BaseError {
 }
 
 /**
- * Thrown when an event is dropped for any reason
+ * Thrown when an event is dropped from the queue for any reason
  */
 export class DroppedError extends BaseError {
   constructor(message: string) {
@@ -80,9 +80,29 @@ export class DroppedError extends BaseError {
 }
 
 /**
- * Thrown when an event is dropped as a result of clearing out the queue
+ * Thrown when an event is dropped as a result of clearing out the queue on shutdown
+ *
+ * Extends DroppedError since the message was dropped from the queue
  */
-export class ClearDroppedError extends DroppedError {
+export class QueueShutdownError extends DroppedError {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+/**
+ * Thrown into the ack queue on shutdown, terminating all promises waiting for an ack
+ */
+export class AckShutdownError extends BaseError {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+/**
+ * Thrown when the EventRetrier is shut down
+ */
+export class RetryShutdownError extends BaseError {
   constructor(message: string) {
     super(message);
   }
@@ -98,16 +118,9 @@ export class AuthError extends BaseError {
 }
 
 /**
- * Thrown into the ack queue on shutdown, terminating all promises waiting for an ack
- */
-export class ShutdownError extends BaseError {
-  constructor(message: string) {
-    super(message);
-  }
-}
-
-/**
  * Thrown when the shared key doesn't match
+ *
+ * Extends AuthError, since the key was incorrect
  */
 export class SharedKeyMismatchError extends AuthError {
   constructor(message: string) {

@@ -1,6 +1,6 @@
 import * as protocol from "../protocol";
 import {DeferredPromise} from "p-defer";
-import {ClearDroppedError, DroppedError} from "../error";
+import {DroppedError, QueueShutdownError} from "../error";
 
 /**
  * Every queue must have this type of data
@@ -96,7 +96,7 @@ export abstract class Queue {
     let entryData: EntryData | null;
     while ((entryData = this.pop()) !== null) {
       entryData.deferred.reject(
-        new ClearDroppedError("Message dropped due to queue shutdown")
+        new QueueShutdownError("Message dropped due to queue shutdown")
       );
     }
   }
