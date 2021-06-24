@@ -3,7 +3,7 @@ import {
   DataTypeError,
   MissingTagError,
   AckTimeoutError,
-  ShutdownError,
+  AckShutdownError,
 } from "./error";
 import EventTime from "./event_time";
 import * as protocol from "./protocol";
@@ -439,7 +439,15 @@ export class FluentClient {
       try {
         await this.socket.disconnect();
       } finally {
-        this.clearAcks();
+        // We want to client to be in a state where nothing is pending that isn't in the sendQueue, now that the socket is unflushable.
+        // This means nothing is pending acknowledgemnets, and nothing is pending to retry.
+        // As a result, we can drop all the pending events, or send them once we're connected again
+        // Drop the acks first, as they can queue up retries which we need to short circuit
+        await this.clearAcks();
+        if (this.retrier) {
+          // Short circuit all retries, so they requeue immediately
+          await this.retrier.shortCircuit();
+        }
       }
     }
   }
@@ -676,11 +684,15 @@ export class FluentClient {
    * Fails all acknowledgements
    * Called on shutdown
    */
-  private clearAcks(): void {
+  private async clearAcks(): Promise<void> {
     for (const data of this.ackQueue.values()) {
       clearTimeout(data.timeoutId);
-      data.deferred.reject(new ShutdownError("ack queue emptied"));
+      data.deferred.reject(new AckShutdownError("ack queue emptied"));
     }
     this.ackQueue = new Map();
+
+    // We want this to resolve on the next tick, once handlers depending on the ack result have fully resolved
+    // i.e we have emptied PromiseJobs
+    return new Promise(r => process.nextTick(r));
   }
 }

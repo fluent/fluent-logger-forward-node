@@ -1,4 +1,5 @@
-import {DroppedError} from "./error";
+import * as pDefer from "p-defer";
+import {DroppedError, RetryShutdownError} from "./error";
 
 /**
  * Event retry settings
@@ -46,6 +47,7 @@ export type EventRetryOptions = {
  */
 export class EventRetrier {
   private options: EventRetryOptions;
+  private cancelWait: pDefer.DeferredPromise<void>;
   constructor(opts: Partial<EventRetryOptions> = {}) {
     this.options = {
       attempts: 4,
@@ -56,6 +58,44 @@ export class EventRetrier {
       onError: () => {},
       ...(opts || {}),
     };
+    this.cancelWait = pDefer<void>();
+  }
+
+  /**
+   * Causes ongoing retry handlers to cancel their timeout and immediately retry
+   * @returns a Promise which completes after all handlers have retried once.
+   */
+  public async shortCircuit(): Promise<void> {
+    const {resolve} = this.cancelWait;
+    // Reinitialize the promise so this class can continue to be reused
+    this.cancelWait = pDefer<void>();
+
+    resolve();
+
+    // The Promise.resolve PromiseJob will be enqueued after all the resolve functions on cancelWait.
+    // Promise.race([a,b]) then enqueues another PromiseJob since it needs to resolve its promise.
+    // We want the shutdown promise to resolve after the Promise.race.then call, meaning we enqueue a
+    // new PromiseJob as well, which is enqueued after Promise.race enqueues it's jobs
+    await Promise.resolve();
+  }
+
+  /**
+   * Exits all ongoing retry handlers with an error
+   *
+   * @returns A promise which completes once all retry handlers have exited.
+   */
+  public async shutdown(): Promise<void> {
+    const {reject} = this.cancelWait;
+    // Reinitialize the promise so this class can continue to be reused
+    this.cancelWait = pDefer<void>();
+
+    reject(new RetryShutdownError("Retries were shut down"));
+
+    // The Promise.resolve PromiseJob will be enqueued after all the resolve functions on cancelWait.
+    // Promise.race([a,b]) then enqueues another PromiseJob since it needs to resolve its promise.
+    // We want the shutdown promise to resolve after the Promise.race.then call, meaning we enqueue a
+    // new PromiseJob as well, which is enqueued after Promise.race enqueues it's jobs
+    await Promise.resolve();
   }
 
   /**
@@ -71,7 +111,7 @@ export class EventRetrier {
       try {
         return await makePromise();
       } catch (e) {
-        // Ignore DroppedError by default, this prevents us from requeuing on shutdown
+        // Ignore DroppedError by default, this prevents us from requeuing on shutdown or queue clear
         if (e instanceof DroppedError) {
           throw e;
         }
@@ -89,7 +129,22 @@ export class EventRetrier {
           )
         );
         retryAttempts += 1;
-        await new Promise(r => setTimeout(r, retryInterval));
+
+        let timeoutId: NodeJS.Timeout | null = null;
+        const waitPromise = new Promise<void>(resolve => {
+          timeoutId = setTimeout(() => {
+            timeoutId = null;
+            resolve();
+          }, retryInterval);
+        });
+
+        try {
+          await Promise.race([waitPromise, this.cancelWait.promise]);
+        } finally {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+        }
       }
       // eslint-disable-next-line no-constant-condition
     } while (true);
