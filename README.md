@@ -91,6 +91,9 @@ const logger = new FluentClient("tag_prefix", {
     disableReconnect: true
   }
 });
+// If you disable reconnections, the socket has to be manually connected, 
+// connect() returns a promise, which rejects on connection errors.
+logger.connect();
 ```
 
 ### Shared key authentication
