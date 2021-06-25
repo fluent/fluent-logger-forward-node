@@ -18,6 +18,8 @@ describe("FluentServer", () => {
       socket: {port: server.port || undefined, disableReconnect: true},
     });
 
+    await client.connect();
+
     const eventPromise = new Promise<{
       tag: protocol.Tag;
       time: protocol.Time;
@@ -48,6 +50,8 @@ describe("FluentServer", () => {
       socket: {port: server.port || undefined, disableReconnect: true},
       ack: {},
     });
+
+    await client.connect();
 
     const eventPromise = new Promise<{
       tag: protocol.Tag;
@@ -87,6 +91,8 @@ describe("FluentServer", () => {
       socket: {port: server.port || undefined, disableReconnect: true},
       security: {clientHostname: "test-client", sharedKey: "foo"},
     });
+
+    await client.connect();
 
     const eventPromise = new Promise<{
       tag: protocol.Tag;
@@ -131,6 +137,8 @@ describe("FluentServer", () => {
         password: "hunter2",
       },
     });
+
+    await client.connect();
 
     const eventPromise = new Promise<{
       tag: protocol.Tag;

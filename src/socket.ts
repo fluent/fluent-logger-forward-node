@@ -80,7 +80,9 @@ export type FluentSocketOptions = {
    */
   reconnect?: Partial<ReconnectOptions>;
   /**
-   * Disable reconnection on failure. This can be useful for one-offs
+   * Disable reconnection on failure. This can be useful for one-offs, or if you'd like to manually manage the connection.
+   *
+   * Prevents the socket from being created on client create.
    *
    * Defaults to false
    */

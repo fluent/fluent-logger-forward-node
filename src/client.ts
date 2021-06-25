@@ -253,7 +253,11 @@ export class FluentClient {
       this.socket.on("error", options.onSocketError);
     }
 
-    this.connect();
+    // Only connect if we're able to reconnect
+    // Otherwise we expect an explicit connect() which will handle connection errors
+    if (!options.socket?.disableReconnect) {
+      this.connect();
+    }
   }
 
   /**
