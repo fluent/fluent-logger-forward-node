@@ -178,10 +178,6 @@ export enum CloseState {
    */
   FATAL,
   /**
-   * Allow the socket to reconnect manually
-   */
-  CLOSE,
-  /**
    * Allow the socket to reconnect automatically
    */
   RECONNECT,
@@ -189,15 +185,6 @@ export enum CloseState {
 
 const isAvailableForUserRead = (state: SocketState): boolean => {
   return (
-    state === SocketState.ESTABLISHED ||
-    state === SocketState.DRAINING ||
-    state === SocketState.DISCONNECTING
-  );
-};
-
-const isConnected = (state: SocketState): boolean => {
-  return (
-    state === SocketState.CONNECTED ||
     state === SocketState.ESTABLISHED ||
     state === SocketState.DRAINING ||
     state === SocketState.DISCONNECTING
@@ -264,7 +251,7 @@ export class FluentSocket extends EventEmitter {
    *
    * @returns void
    */
-  public connect(): void {
+  public async connect(): Promise<void> {
     if (this.state === SocketState.FATAL) {
       throw new FatalSocketError(
         "Socket is fatally closed, create a new socket to reconnect"
@@ -276,9 +263,10 @@ export class FluentSocket extends EventEmitter {
     ) {
       if (this.state === SocketState.DISCONNECTING) {
         // Try again once the socket has fully closed
-        process.nextTick(() => this.connect());
+        await new Promise(r => process.nextTick(r));
+        return await this.connect();
       } else {
-        // noop
+        // noop, we're connected
         return;
       }
     }
@@ -289,10 +277,19 @@ export class FluentSocket extends EventEmitter {
         clearTimeout(this.reconnectTimeoutId);
         this.reconnectTimeoutId = null;
       }
-      this.openSocket();
+      try {
+        await this.openSocket();
+      } catch (e) {
+        if (!this.reconnectEnabled) {
+          throw e;
+        } else {
+          // Suppress connection errors if reconnections are enabled
+          return;
+        }
+      }
     } else if (!this.socket.writable) {
-      this.disconnect();
-      this.connect();
+      await this.disconnect();
+      await this.connect();
     }
   }
 
@@ -348,19 +345,21 @@ export class FluentSocket extends EventEmitter {
   private createSocket(onConnect: () => void): Duplex {
     if (this.tlsEnabled) {
       const socket = this.createTlsSocket();
-      socket.on("secureConnect", onConnect);
+      socket.once("secureConnect", onConnect);
       return socket;
     } else {
       const socket = this.createTcpSocket();
-      socket.on("connect", onConnect);
+      socket.once("connect", onConnect);
       return socket;
     }
   }
 
   /**
-   * Sets up the socket to be opened
+   * Sets up and connects the socket
+   *
+   * @returns A promise which resolves once the socket is connected, or once it is errored
    */
-  private openSocket(): void {
+  private openSocket(): Promise<void> {
     this.state = SocketState.CONNECTING;
     this.socket = this.createSocket(() => this.handleConnect());
 
@@ -374,6 +373,12 @@ export class FluentSocket extends EventEmitter {
     this.passThroughStream = new PassThrough();
     this.socket.pipe(this.passThroughStream);
     this.processMessages(protocol.decodeServerStream(this.passThroughStream));
+
+    return new Promise<void>((resolve, reject) => {
+      // This may call both resolve and reject, but the ES standard says this is OK
+      this.once("connected", () => resolve());
+      this.once("error", err => reject(err));
+    });
   }
 
   /**
@@ -400,7 +405,7 @@ export class FluentSocket extends EventEmitter {
         this.onMessage(message);
       }
     } catch (e) {
-      this.close(CloseState.CLOSE, e);
+      this.close(CloseState.RECONNECT, e);
     }
   }
 
@@ -408,6 +413,16 @@ export class FluentSocket extends EventEmitter {
    * Called from an error event on the socket
    */
   private handleError(error: Error): void {
+    if ((error as NodeJS.ErrnoException).code === "ECONNRESET") {
+      // This is OK in disconnecting states
+      if (
+        this.state === SocketState.DISCONNECTING ||
+        this.state === SocketState.IDLE ||
+        this.state === SocketState.DISCONNECTED
+      ) {
+        return;
+      }
+    }
     this.onError(error);
   }
 
@@ -416,13 +431,13 @@ export class FluentSocket extends EventEmitter {
    * Should suspend the socket (set it to IDLE)
    */
   private handleTimeout(): void {
-    if (this.socket !== null && isConnected(this.state)) {
+    if (this.socket !== null) {
       this.state = SocketState.IDLE;
       this.socket.end(() => this.emit("timeout"));
     } else {
       this.close(
         CloseState.FATAL,
-        new SocketTimeoutError("Socket timed out, but we weren't connected")
+        new SocketTimeoutError("Socket timed out, but socket wasn't open")
       );
     }
   }
@@ -542,13 +557,13 @@ export class FluentSocket extends EventEmitter {
         );
       } else {
         this.close(
-          CloseState.CLOSE,
+          CloseState.FATAL,
           new UnexpectedMessageError("Received unexpected message")
         );
       }
     } else {
       this.close(
-        CloseState.CLOSE,
+        CloseState.FATAL,
         new UnexpectedMessageError("Received unexpected message")
       );
     }
@@ -590,8 +605,6 @@ export class FluentSocket extends EventEmitter {
     if (this.socket !== null) {
       if (closeState === CloseState.FATAL) {
         this.state = SocketState.FATAL;
-      } else if (closeState === CloseState.CLOSE) {
-        this.state = SocketState.DISCONNECTING;
       }
       this.socket.destroy();
     }
