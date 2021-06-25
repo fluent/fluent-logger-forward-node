@@ -140,6 +140,13 @@ export type FluentClientOptions = {
    */
   sendQueueNotFlushableLimit?: Partial<SendQueueLimit>;
   /**
+   * The delay after which we're not writable to start flushing events.
+   * Useful to make sure we don't drop events during short blips
+   *
+   * Defaults to 0 (no delay)
+   */
+  sendQueueNotFlushableLimitDelay?: number;
+  /**
    * An error handler which will receive socket error events
    *
    * Useful for logging, these will be handled internally
@@ -174,7 +181,9 @@ export class FluentClient {
   private sendQueueFlushLimit: SendQueueLimit;
   private sendQueueMaxLimit: SendQueueLimit;
   private sendQueueNotFlushableLimit: SendQueueLimit | null;
+  private sendQueueNotFlushableLimitDelay: number;
 
+  private notFlushableLimitTimeoutId: null | NodeJS.Timeout = null;
   private nextFlushTimeoutId: null | NodeJS.Timeout = null;
   private flushing = false;
   private willFlushNextTick: Promise<boolean> | null = null;
@@ -233,6 +242,8 @@ export class FluentClient {
           ...options.sendQueueNotFlushableLimit,
         }
       : null;
+    this.sendQueueNotFlushableLimitDelay =
+      options.sendQueueNotFlushableLimitDelay || 0;
 
     this.socket = this.createSocket(options.security, options.socket);
 
@@ -412,8 +423,8 @@ export class FluentClient {
   /**
    * Connects the client. Happens automatically during construction, but can be called after a `disconnect()` to resume the client.
    */
-  public connect() {
-    this.socket.connect();
+  public async connect(): Promise<void> {
+    await this.socket.connect();
   }
 
   /**
@@ -535,10 +546,28 @@ export class FluentClient {
     }
     // can't flush
     if (!this.socket.writable()) {
-      if (this.sendQueueNotFlushableLimit) {
-        this.dropLimit(this.sendQueueNotFlushableLimit);
+      if (
+        this.sendQueueNotFlushableLimit &&
+        this.notFlushableLimitTimeoutId === null
+      ) {
+        if (this.sendQueueNotFlushableLimitDelay > 0) {
+          this.notFlushableLimitTimeoutId = setTimeout(() => {
+            this.notFlushableLimitTimeoutId = null;
+            if (this.sendQueueNotFlushableLimit) {
+              this.dropLimit(this.sendQueueNotFlushableLimit);
+            }
+          }, this.sendQueueNotFlushableLimitDelay);
+        } else {
+          this.dropLimit(this.sendQueueNotFlushableLimit);
+        }
       }
       return;
+    } else {
+      // When writable, we want to clear the not flushable limit
+      if (this.notFlushableLimitTimeoutId !== null) {
+        clearTimeout(this.notFlushableLimitTimeoutId);
+        this.notFlushableLimitTimeoutId = null;
+      }
     }
     // flush on an interval
     if (this.flushInterval > 0) {
@@ -683,6 +712,8 @@ export class FluentClient {
   /**
    * Fails all acknowledgements
    * Called on shutdown
+   *
+   * @returns a Promise which resolves once all the handlers depending on the ack result have resolved
    */
   private async clearAcks(): Promise<void> {
     for (const data of this.ackQueue.values()) {

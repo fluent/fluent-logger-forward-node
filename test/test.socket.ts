@@ -191,15 +191,11 @@ describe("FluentSocket", () => {
 
     const spy = sinon.spy(socket, "connect");
 
-    socket.on("close", () => {
-      process.nextTick(() => {
-        expect((<any>socket).reconnectTimeoutId).to.be.null;
-        sinon.assert.notCalled(spy);
-        done();
-      });
-    });
-    socket.on("writable", () => {
-      socket.close(CloseState.CLOSE);
+    socket.on("writable", async () => {
+      await socket.disconnect();
+      expect((<any>socket).reconnectTimeoutId).to.be.null;
+      sinon.assert.notCalled(spy);
+      done();
     });
   });
 

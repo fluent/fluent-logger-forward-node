@@ -111,7 +111,7 @@ export class FluentAuthSocket extends FluentSocket {
       super.onMessage(message);
     } else {
       this.close(
-        CloseState.CLOSE,
+        CloseState.FATAL,
         new UnexpectedMessageError("Received unexpected message")
       );
     }

@@ -12,11 +12,9 @@ export const fakeSocket = (): {
   const socket = duplexer3({allowHalfOpen: false}, readable, writable);
   socket.on("end", () => {
     socket.destroy();
-    socket.emit("close");
   });
   socket.on("finish", () => {
     socket.destroy();
-    socket.emit("close");
   });
   return {
     socket,
