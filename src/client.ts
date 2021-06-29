@@ -77,6 +77,33 @@ export type SendQueueLimit = {
   length: number;
 };
 
+export type DisconnectOptions = {
+  /**
+   * The amount of time to wait between flush attempts on disconnection (after making at least one attempt)
+   *
+   * Useful to wait if the fluent server is unavailable right when we're disconnecting
+   *
+   * Defaults to 0
+   */
+  flushDelay: number;
+  /**
+   * The number of times to attempt a flush on disconnection
+   *
+   * Useful to empty the send queue before disconnecting
+   *
+   * Defaults to 1
+   */
+  maxFlushAttempts: number;
+  /**
+   * The amount of time to wait before disconnecting the socket on disconnection
+   *
+   * Useful to wait for acknowledgements on final flush
+   *
+   * Defaults to 0
+   */
+  socketDisconnectDelay: number;
+};
+
 /**
  * The constructor options passed to the client
  */
@@ -160,6 +187,14 @@ export type FluentClientOptions = {
    * See subtype for defaults
    */
   eventRetry?: Partial<EventRetryOptions>;
+  /**
+   * Options to control disconnection behavior
+   *
+   * How many times to try to flush before disconnecting, wait times, etc
+   *
+   * See subtype for defaults
+   */
+  disconnect?: Partial<DisconnectOptions>;
 };
 
 /**
@@ -187,6 +222,7 @@ export class FluentClient {
   private nextFlushTimeoutId: null | NodeJS.Timeout = null;
   private flushing = false;
   private willFlushNextTick: Promise<boolean> | null = null;
+  private disconnectOptions: DisconnectOptions;
 
   /**
    * Creates a new FluentClient
@@ -244,6 +280,13 @@ export class FluentClient {
       : null;
     this.sendQueueNotFlushableLimitDelay =
       options.sendQueueNotFlushableLimitDelay || 0;
+
+    this.disconnectOptions = {
+      flushDelay: 0,
+      maxFlushAttempts: 1,
+      socketDisconnectDelay: 0,
+      ...(options.disconnect || {}),
+    };
 
     this.socket = this.createSocket(options.security, options.socket);
 
@@ -445,8 +488,26 @@ export class FluentClient {
    */
   public async disconnect(): Promise<void> {
     try {
-      await this.flush();
+      let flushCount = 0;
+      while (flushCount < this.disconnectOptions.maxFlushAttempts) {
+        // Only delay after making one flush attempt
+        if (flushCount > 0 && this.disconnectOptions.flushDelay > 0) {
+          await new Promise(r =>
+            setTimeout(r, this.disconnectOptions.flushDelay)
+          );
+        }
+        // Exit if flush returns false - queue is empty
+        if (!(await this.flush())) {
+          break;
+        }
+        flushCount += 1;
+      }
     } finally {
+      if (this.disconnectOptions.socketDisconnectDelay > 0) {
+        await new Promise(r =>
+          setTimeout(r, this.disconnectOptions.socketDisconnectDelay)
+        );
+      }
       try {
         await this.socket.disconnect();
       } finally {
