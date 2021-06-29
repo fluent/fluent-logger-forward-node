@@ -600,6 +600,8 @@ export class FluentSocket extends EventEmitter {
     if (this.socket !== null) {
       if (closeState === CloseState.FATAL) {
         this.state = SocketState.FATAL;
+      } else {
+        this.state = SocketState.DISCONNECTING;
       }
       this.socket.destroy();
     }
