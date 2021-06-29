@@ -251,6 +251,8 @@ export class FluentSocket extends EventEmitter {
   /**
    * Connects the socket to the upstream server
    *
+   * Can throw a connection error, we may reconnect from this state, but the error will still be thrown
+   *
    * @returns void
    */
   public async connect(): Promise<void> {
@@ -279,16 +281,7 @@ export class FluentSocket extends EventEmitter {
         clearTimeout(this.reconnectTimeoutId);
         this.reconnectTimeoutId = null;
       }
-      try {
-        await this.openSocket();
-      } catch (e) {
-        if (!this.reconnectEnabled) {
-          throw e;
-        } else {
-          // Suppress connection errors if reconnections are enabled
-          return;
-        }
-      }
+      await this.openSocket();
     } else if (!this.socket.writable) {
       await this.disconnect();
       await this.connect();
