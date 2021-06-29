@@ -195,6 +195,12 @@ export type FluentClientOptions = {
    * See subtype for defaults
    */
   disconnect?: Partial<DisconnectOptions>;
+  /**
+   * Disable connection on client creation. Expects the client to call .connect to start sending messages.
+   *
+   * Defaults to false
+   */
+  disableAutoconnect?: boolean;
 };
 
 /**
@@ -296,9 +302,11 @@ export class FluentClient {
       this.socket.on("error", options.onSocketError);
     }
 
-    // Only connect if we're able to reconnect
+    // Only connect if we're able to reconnect and user has not disabled auto connect
     // Otherwise we expect an explicit connect() which will handle connection errors
-    if (!options.socket?.disableReconnect) {
+    const autoConnect =
+      !options.socket?.disableReconnect && !options.disableAutoconnect;
+    if (autoConnect) {
       this.connect();
     }
   }
