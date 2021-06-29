@@ -307,7 +307,9 @@ export class FluentClient {
     const autoConnect =
       !options.socket?.disableReconnect && !options.disableAutoconnect;
     if (autoConnect) {
-      this.connect();
+      // Catch errors and noop them, so the constructor doesn't throw unhandled promises
+      // They can be handled by the socket "error" event handler anyway
+      this.connect().catch(() => {});
     }
   }
 
@@ -476,7 +478,7 @@ export class FluentClient {
   }
 
   /**
-   * Connects the client. Happens automatically during construction, but can be called after a `disconnect()` to resume the client.
+   * Connects the client. Can happen automatically during construction, but can be called after a `disconnect()` to resume the client.
    */
   public async connect(): Promise<void> {
     await this.socket.connect();
