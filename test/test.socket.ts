@@ -180,6 +180,27 @@ describe("FluentSocket", () => {
     });
   });
 
+  it("should disconnect if not writable", done => {
+    const {socket, stream, connectStub} = createFluentSocket();
+
+    expect((<any>socket).reconnectEnabled).to.be.true;
+
+    socket.connect();
+
+    const spy = sinon.spy(socket, "close");
+
+    sinon.assert.calledOnce(connectStub);
+    socket.once("writable", () => {
+      sinon.stub(stream.socket, "writable").get(() => false);
+      sinon.stub(stream.socket, "destroy");
+      expect(socket.writable()).to.be.false;
+      expect(socket.writable()).to.be.false;
+      sinon.assert.calledOnce(spy);
+      expect(stream.socket.destroyed).to.be.false;
+      done();
+    });
+  });
+
   it("should not reconnect after disconnect", done => {
     const {socket, connectStub} = createFluentSocket({reconnect: {}});
 
