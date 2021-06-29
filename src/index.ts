@@ -11,6 +11,7 @@ export type {
   AckOptions,
   EventModes,
   SendQueueLimit,
+  DisconnectOptions,
 } from "./client";
 
 export type {FluentServerOptions, FluentServerSecurityOptions} from "./server";

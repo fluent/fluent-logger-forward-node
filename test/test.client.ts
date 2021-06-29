@@ -456,6 +456,23 @@ describe("FluentClient", () => {
     socket.emit("error", new Error("test"));
   });
 
+  it("should flush on disconnect", async () => {
+    const {client, socket} = createFluentClient("test");
+    socket.isWritable = false;
+    const spy = sinon.spy(client, "flush");
+
+    const firstEvent = client.emit("a", {event: "foo bar"});
+
+    await new Promise(r => setTimeout(r, 100));
+    sinon.assert.notCalled(spy);
+
+    socket.isWritable = true;
+    await client.disconnect();
+    await expect(firstEvent).to.eventually.be.fulfilled;
+
+    sinon.assert.calledOnce(spy);
+  });
+
   it("should reject pending events after shutdown", async () => {
     const {client, socket} = createFluentClient("test");
     socket.isWritable = false;
