@@ -147,7 +147,15 @@ enum SocketState {
    * No write
    * Transitions to DISCONNECTED on close event
    */
-  DISCONNECTING, // The socket is in the process of being closed (no write, can read)
+  DISCONNECTING,
+  /**
+   * In this state, the socket is being destroyed due to an error event, and will be reconnected.
+   *
+   * Can read
+   * No write
+   * Transitions to DISCONNECTED on close event
+   */
+  CLOSING,
   /**
    * In this state, the socket has timed out due to inactivity. It will be reconnected once the user calls `writable()`.
    *
@@ -600,6 +608,8 @@ export class FluentSocket extends EventEmitter {
     if (this.socket !== null) {
       if (closeState === CloseState.FATAL) {
         this.state = SocketState.FATAL;
+      } else {
+        this.state = SocketState.CLOSING;
       }
       this.socket.destroy();
     }
