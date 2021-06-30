@@ -801,4 +801,22 @@ export class FluentClient {
     // i.e we have emptied PromiseJobs
     return new Promise(r => process.nextTick(r));
   }
+
+  /**
+   * Returns the number of queued events that haven't been sent yet
+   *
+   * Useful to react if we're queuing up too many events within a single tick
+   */
+  get queueLength(): number {
+    return this.sendQueue.queueLength;
+  }
+
+  /**
+   * Returns whether or not the socket is writable
+   *
+   * Useful to react if we're disconnected for any reason
+   */
+  get writable(): boolean {
+    return this.socket.writable();
+  }
 }
