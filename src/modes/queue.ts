@@ -58,6 +58,13 @@ export abstract class Queue {
     data: protocol.EventRecord
   ): Promise<void>;
   /**
+   * Returns the Promise for the last element in the queue. Note that this may not be the last push() call
+   * especially in the case of *Forward modes
+   * 
+   * @returns The same promise from the push() which is queued last (if we were to call nextPacket in a loop, this promise would be the last one)
+   */
+  public abstract last(): Promise<void> | null;
+  /**
    * Returns the next packet to send from the queue
    *
    * @param chunk A Chunk ID to send along, for acknowledgements if enabled

@@ -58,6 +58,11 @@ export class ForwardQueue extends Queue {
     }
   }
 
+  public last(): Promise<void> | null {
+    const lastEntry = Array.from(this.sendQueue.values()).pop();
+    return lastEntry ? lastEntry.deferred.promise : null;
+  }
+
   public pop(): ForwardRecord | null {
     if (this.sendQueue.size === 0) {
       return null;

@@ -76,6 +76,11 @@ class BasePackedForwardQueue extends Queue {
     }
   }
 
+  public last(): Promise<void> | null {
+    const lastEntry = Array.from(this.sendQueue.values()).pop();
+    return lastEntry ? lastEntry.deferred.promise : null;
+  }
+
   protected pop(): PackedRecord | null {
     if (this.sendQueue.size === 0) {
       return null;

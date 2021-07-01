@@ -856,4 +856,15 @@ export class FluentClient {
   get writable(): boolean {
     return this.socket.writable();
   }
+
+  /**
+   * Returns the last element in the queue. 
+   * When this promise resolves, we're guaranteed that the queue 
+   * has flushed up to this point
+   * 
+   * @returns A Promise which resolves once the queue has flushed, or null if the queue is empty
+   */
+  public last(): Promise<void> | null {
+    return this.sendQueue.last();
+  }
 }

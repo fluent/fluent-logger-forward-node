@@ -49,6 +49,11 @@ export class MessageQueue extends Queue {
     return deferred.promise;
   }
 
+  public last(): Promise<void> | null {
+    const lastEntry = Array.from(this.sendQueue.values()).pop();
+    return lastEntry ? lastEntry.deferred.promise : null;
+  }
+
   protected pop(): EventRecord | null {
     if (this.sendQueue.size === 0) {
       return null;
