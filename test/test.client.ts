@@ -179,7 +179,7 @@ describe("FluentClient", () => {
         const clock = sandbox.useFakeTimers();
         const setTimeoutSpy = sandbox.spy(clock, "setTimeout");
         const {client} = createFluentClient("test", {
-          sendQueueFlushLimit: {
+          sendQueueIntervalFlushLimit: {
             size: 20,
           },
           flushInterval: 600000 /* 10 minutes */,
@@ -199,7 +199,7 @@ describe("FluentClient", () => {
         const setTimeoutSpy = sandbox.spy(clock, "setTimeout");
         const {client} = createFluentClient("test", {
           eventMode: "Message",
-          sendQueueFlushLimit: {
+          sendQueueIntervalFlushLimit: {
             length: 2,
           },
           flushInterval: 600000 /* 10 minutes */,
@@ -223,7 +223,7 @@ describe("FluentClient", () => {
           flushInterval: timeout /* 100ms */,
         });
 
-        const spy = sandbox.spy(client, <any>"innerFlush");
+        const spy = sandbox.spy(client, "syncFlush");
         const firstEvent = client.emit("a", {event: "foo bar"});
         const secondEvent = client.emit("b", {event: "lorem"});
 
@@ -251,7 +251,7 @@ describe("FluentClient", () => {
           flushInterval: timeout,
         });
 
-        const spy = sandbox.spy(client, <any>"innerFlush");
+        const spy = sandbox.spy(client, "syncFlush");
         const firstEvent = client.emit("a", {event: "foo bar"});
         const secondEvent = client.emit("b", {event: "lorem"});
 
@@ -290,7 +290,7 @@ describe("FluentClient", () => {
     describe("when no flush interval is provided", () => {
       it("should trigger flush after emit", async () => {
         const {client} = createFluentClient("test", {});
-        const spy = sandbox.spy(client, <any>"innerFlush");
+        const spy = sandbox.spy(client, "syncFlush");
         const firstEvent = client.emit("a", {event: "foo bar"});
         const secondEvent = client.emit("b", {event: "lorem"});
 
@@ -299,6 +299,23 @@ describe("FluentClient", () => {
         await new Promise(r => process.nextTick(() => process.nextTick(r)));
 
         sinon.assert.calledOnce(spy);
+
+        await expect(firstEvent).to.eventually.be.fulfilled;
+        await expect(secondEvent).to.eventually.be.fulfilled;
+      });
+    });
+    describe("when sync flush limit is provided", () => {
+      it("should trigger flush after emit", async () => {
+        const {client} = createFluentClient("test", {
+          sendQueueSyncFlushLimit: {length: 2},
+        });
+        const spy = sandbox.spy(client, "syncFlush");
+        const flushStub = sandbox.stub(client, "flush");
+        const firstEvent = client.emit("a", {event: "foo bar"});
+        const secondEvent = client.emit("b", {event: "lorem"});
+
+        sinon.assert.calledOnce(spy);
+        sinon.assert.calledOnce(flushStub);
 
         await expect(firstEvent).to.eventually.be.fulfilled;
         await expect(secondEvent).to.eventually.be.fulfilled;

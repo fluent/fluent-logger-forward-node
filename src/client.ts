@@ -76,6 +76,13 @@ export type SendQueueLimit = {
    */
   length: number;
 };
+const defaultLimit = (limit?: Partial<SendQueueLimit>): SendQueueLimit => {
+  return {
+    size: +Infinity,
+    length: +Infinity,
+    ...(limit || {}),
+  };
+};
 
 export type DisconnectOptions = {
   /**
@@ -125,12 +132,6 @@ export type FluentClientOptions = {
    */
   ack?: Partial<AckOptions>;
   /**
-   * How long to wait to flush the queued events
-   *
-   * Defaults to 0
-   */
-  flushInterval?: number;
-  /**
    * The timestamp resolution of events passed to FluentD.
    *
    * Passing false here means that the timestamps will be emitted as numbers (unless you explicitly provide an EventTime)
@@ -140,14 +141,33 @@ export type FluentClientOptions = {
    */
   milliseconds?: boolean;
   /**
+   * How long to wait to flush the queued events
+   *
+   * If this is 0, we don't wait at all
+   *
+   * Defaults to 0
+   */
+  flushInterval?: number;
+  /**
    * The limit at which the queue needs to be flushed.
    *
-   * Useful with flushInterval to limit the size of the queue
+   * Used when flushInterval is > 0 to say "flush after flushInterval ms, or when the queue reaches X size"
    *
    * See the subtype for defaults
    */
-  sendQueueFlushLimit?: Partial<SendQueueLimit>;
-
+  sendQueueIntervalFlushLimit?: Partial<SendQueueLimit>;
+  /**
+   * The limit at which we flush synchronously. By default, we flush asynchronously,
+   * which can be bad if we're sending 30k+ events at a time.
+   *
+   * This sets a size limit at which we flush synchronously within emit(), which makes
+   * sure we're flushing as quickly as possible
+   *
+   * Defaults to null (no limit)
+   *
+   * See the subtype for defaults
+   */
+  sendQueueSyncFlushLimit?: Partial<SendQueueLimit>;
   /**
    * The limit at which we start dropping events
    *
@@ -219,8 +239,9 @@ export class FluentClient {
   private socket: FluentSocket;
 
   private flushInterval: number;
-  private sendQueueFlushLimit: SendQueueLimit;
-  private sendQueueMaxLimit: SendQueueLimit;
+  private sendQueueIntervalFlushLimit: SendQueueLimit | null;
+  private sendQueueSyncFlushLimit: SendQueueLimit | null;
+  private sendQueueMaxLimit: SendQueueLimit | null;
   private sendQueueNotFlushableLimit: SendQueueLimit | null;
   private sendQueueNotFlushableLimitDelay: number;
 
@@ -267,22 +288,17 @@ export class FluentClient {
     this.milliseconds = !!options.milliseconds;
 
     this.flushInterval = options.flushInterval || 0;
-    this.sendQueueFlushLimit = {
-      size: +Infinity,
-      length: +Infinity,
-      ...(options.sendQueueFlushLimit || {}),
-    };
-    this.sendQueueMaxLimit = {
-      size: +Infinity,
-      length: +Infinity,
-      ...(options.sendQueueMaxLimit || {}),
-    };
+    this.sendQueueSyncFlushLimit = options.sendQueueSyncFlushLimit
+      ? defaultLimit(options.sendQueueSyncFlushLimit)
+      : null;
+    this.sendQueueIntervalFlushLimit = options.sendQueueIntervalFlushLimit
+      ? defaultLimit(options.sendQueueIntervalFlushLimit)
+      : null;
+    this.sendQueueMaxLimit = options.sendQueueMaxLimit
+      ? defaultLimit(options.sendQueueMaxLimit)
+      : null;
     this.sendQueueNotFlushableLimit = options.sendQueueNotFlushableLimit
-      ? {
-          size: +Infinity,
-          length: +Infinity,
-          ...options.sendQueueNotFlushableLimit,
-        }
+      ? defaultLimit(options.sendQueueNotFlushableLimit)
       : null;
     this.sendQueueNotFlushableLimitDelay =
       options.sendQueueNotFlushableLimitDelay || 0;
@@ -463,7 +479,9 @@ export class FluentClient {
     data: protocol.EventRecord
   ): Promise<void> {
     const promise = this.sendQueue.push(tag, time, data);
-    this.dropLimit(this.sendQueueMaxLimit);
+    if (this.sendQueueMaxLimit) {
+      this.dropLimit(this.sendQueueMaxLimit);
+    }
     this.maybeFlush();
     return promise;
   }
@@ -557,12 +575,13 @@ export class FluentClient {
   }
 
   /**
-   * Flushes to the socket internally
+   * Flushes to the socket synchronously
    *
-   * Managed by `flush` to not be called multiple times
+   * Prefer calling `.flush` which will flush on the next tick, allowing events from this tick to queue up.
+   *
    * @returns true if there are more events in the queue to flush, false otherwise
    */
-  private innerFlush(): boolean {
+  public syncFlush(): boolean {
     if (this.sendQueue.queueLength === 0) {
       return false;
     }
@@ -599,7 +618,7 @@ export class FluentClient {
       this.willFlushNextTick = new Promise(resolve =>
         process.nextTick(() => {
           this.willFlushNextTick = null;
-          resolve(this.innerFlush());
+          resolve(this.syncFlush());
         })
       );
     }
@@ -644,20 +663,17 @@ export class FluentClient {
         this.notFlushableLimitTimeoutId = null;
       }
     }
-    // flush on an interval
-    if (this.flushInterval > 0) {
-      const limit = this.sendQueueFlushLimit;
+    // If we've hit a blocking limit
+    if (
+      this.sendQueueSyncFlushLimit &&
+      this.shouldLimit(this.sendQueueSyncFlushLimit)
+    ) {
+      this.syncFlush();
+    } else if (this.flushInterval > 0) {
       if (
-        this.sendQueue.queueSize !== -1 &&
-        this.sendQueue.queueSize >= limit.size
+        this.sendQueueIntervalFlushLimit &&
+        this.shouldLimit(this.sendQueueIntervalFlushLimit)
       ) {
-        // If the queue has hit the memory flush limit
-        this.flush();
-      } else if (
-        this.sendQueue.queueLength !== -1 &&
-        this.sendQueue.queueLength >= limit.length
-      ) {
-        // If the queue has hit the length flush limit
         this.flush();
       } else if (this.nextFlushTimeoutId === null) {
         // Otherwise, schedule the next flush interval
@@ -694,6 +710,27 @@ export class FluentClient {
         this.sendQueue.dropEntry();
       }
     }
+  }
+
+  /**
+   * Checks if the sendQueue hits this limit
+   * @param limit the limit to check
+   */
+  private shouldLimit(limit: SendQueueLimit): boolean {
+    if (
+      this.sendQueue.queueSize !== -1 &&
+      this.sendQueue.queueSize >= limit.size
+    ) {
+      // If the queue has hit the memory flush limit
+      return true;
+    } else if (
+      this.sendQueue.queueLength !== -1 &&
+      this.sendQueue.queueLength >= limit.length
+    ) {
+      // If the queue has hit the length flush limit
+      return true;
+    }
+    return false;
   }
 
   /**
