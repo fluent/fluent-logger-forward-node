@@ -27,7 +27,7 @@
   "bugs": "https://github.com/jamiees2/fluentd-node/issues",
   "homepage": "https://jamiees2.github.io/fluentd-node/",
   "engines": {
-    "node": ">=12"
+    "node": ">=12.9.0"
   },
   "dependencies": {
     "@msgpack/msgpack": "^2.7.0",

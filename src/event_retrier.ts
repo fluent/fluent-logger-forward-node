@@ -1,5 +1,6 @@
 import * as pDefer from "p-defer";
 import {DroppedError, RetryShutdownError} from "./error";
+import {awaitAtMost} from "./util";
 
 /**
  * Event retry settings
@@ -130,21 +131,8 @@ export class EventRetrier {
         );
         retryAttempts += 1;
 
-        let timeoutId: NodeJS.Timeout | null = null;
-        const waitPromise = new Promise<void>(resolve => {
-          timeoutId = setTimeout(() => {
-            timeoutId = null;
-            resolve();
-          }, retryInterval);
-        });
-
-        try {
-          await Promise.race([waitPromise, this.cancelWait.promise]);
-        } finally {
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-          }
-        }
+        // Await the retry promise, but short circuiting is OK
+        await awaitAtMost(this.cancelWait.promise, retryInterval);
       }
       // eslint-disable-next-line no-constant-condition
     } while (true);
