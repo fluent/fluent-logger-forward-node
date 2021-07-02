@@ -19,6 +19,7 @@ import {
 import {DeferredPromise} from "p-defer";
 import * as crypto from "crypto";
 import {EventRetrier, EventRetryOptions} from "./event_retrier";
+import {awaitAtMost, awaitNextTick, awaitTimeout} from "./util";
 
 type AckData = {
   timeoutId: NodeJS.Timeout;
@@ -86,21 +87,17 @@ const defaultLimit = (limit?: Partial<SendQueueLimit>): SendQueueLimit => {
 
 export type DisconnectOptions = {
   /**
-   * The amount of time to wait between flush attempts on disconnection (after making at least one attempt)
+   * If to wait for all pending events to finish sending to the fluent server before disconnecting
    *
-   * Useful to wait if the fluent server is unavailable right when we're disconnecting
-   *
-   * Defaults to 0
+   * Defaults to false (does not wait)
    */
-  flushDelay: number;
+  waitForPending: boolean;
   /**
-   * The number of times to attempt a flush on disconnection
+   * The maximum amount of time to wait for pending events to finish sending to the fluent server before disconnecting
    *
-   * Useful to empty the send queue before disconnecting
-   *
-   * Defaults to 1
+   * Defaults to 0 (no maximum time)
    */
-  maxFlushAttempts: number;
+  waitForPendingDelay: number;
   /**
    * The amount of time to wait before disconnecting the socket on disconnection
    *
@@ -233,6 +230,7 @@ export class FluentClient {
   private ackOptions: AckOptions;
   private ackQueue: Map<protocol.Chunk, AckData> = new Map();
   private sendQueue: Queue;
+  private emitQueue: Set<Promise<void>> = new Set();
   private milliseconds: boolean;
   private retrier: EventRetrier | null;
 
@@ -304,8 +302,8 @@ export class FluentClient {
       options.sendQueueNotFlushableLimitDelay || 0;
 
     this.disconnectOptions = {
-      flushDelay: 0,
-      maxFlushAttempts: 1,
+      waitForPending: false,
+      waitForPendingDelay: 0,
       socketDisconnectDelay: 0,
       ...(options.disconnect || {}),
     };
@@ -456,11 +454,19 @@ export class FluentClient {
     } else {
       time = millisOrEventTime;
     }
+    let emitPromise: Promise<void>;
     if (this.retrier !== null) {
-      return this.retrier.retryPromise(() => this.pushEvent(tag, time, data));
+      emitPromise = this.retrier.retryPromise(() =>
+        this.pushEvent(tag, time, data)
+      );
     } else {
-      return this.pushEvent(tag, time, data);
+      emitPromise = this.pushEvent(tag, time, data);
     }
+    if (!this.emitQueue.has(emitPromise)) {
+      this.emitQueue.add(emitPromise);
+      emitPromise.finally(() => this.emitQueue.delete(emitPromise));
+    }
+    return emitPromise;
   }
 
   /**
@@ -520,25 +526,22 @@ export class FluentClient {
    */
   public async disconnect(): Promise<void> {
     try {
-      let flushCount = 0;
-      while (flushCount < this.disconnectOptions.maxFlushAttempts) {
-        // Only delay after making one flush attempt
-        if (flushCount > 0 && this.disconnectOptions.flushDelay > 0) {
-          await new Promise(r =>
-            setTimeout(r, this.disconnectOptions.flushDelay)
+      // Flush before awaiting
+      await this.flush();
+      if (this.disconnectOptions.waitForPending) {
+        const flushPromise = this.waitForPending();
+        if (this.disconnectOptions.waitForPendingDelay > 0) {
+          await awaitAtMost(
+            flushPromise,
+            this.disconnectOptions.waitForPendingDelay
           );
+        } else {
+          await flushPromise;
         }
-        // Exit if flush returns false - queue is empty
-        if (!(await this.flush())) {
-          break;
-        }
-        flushCount += 1;
       }
     } finally {
       if (this.disconnectOptions.socketDisconnectDelay > 0) {
-        await new Promise(r =>
-          setTimeout(r, this.disconnectOptions.socketDisconnectDelay)
-        );
+        await awaitTimeout(this.disconnectOptions.socketDisconnectDelay);
       }
       try {
         await this.socket.disconnect();
@@ -836,7 +839,7 @@ export class FluentClient {
 
     // We want this to resolve on the next tick, once handlers depending on the ack result have fully resolved
     // i.e we have emptied PromiseJobs
-    return new Promise(r => process.nextTick(r));
+    return awaitNextTick();
   }
 
   /**
@@ -844,7 +847,7 @@ export class FluentClient {
    *
    * Useful to react if we're queuing up too many events within a single tick
    */
-  get queueLength(): number {
+  get sendQueueLength(): number {
     return this.sendQueue.queueLength;
   }
 
@@ -855,5 +858,24 @@ export class FluentClient {
    */
   get writable(): boolean {
     return this.socket.writable();
+  }
+
+  /**
+   * Returns the number of events that have been queued, but haven't resolved yet
+   *
+   * This includes acknowledgements and retries if enabled.
+   */
+  get queueLength(): number {
+    return this.emitQueue.size;
+  }
+
+  /**
+   * Waits for all currently pending events to successfully resolve or reject
+   *
+   * @returns A Promise which resolves once all the pending events have successfully been emitted
+   */
+  public async waitForPending(): Promise<void> {
+    // Clone the emitQueue, to ignore emit calls made while waiting
+    await Promise.allSettled(Array.from(this.emitQueue));
   }
 }

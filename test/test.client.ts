@@ -14,6 +14,7 @@ import {
   DroppedError,
   AckShutdownError,
 } from "../src/error";
+import {awaitNextTick, awaitTimeout} from "../src/util";
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -265,7 +266,7 @@ describe("FluentClient", () => {
 
         clock.tick(timeout * 2);
         // wait for next tick
-        await new Promise(r => process.nextTick(r));
+        await awaitNextTick();
 
         expect(firstEvent).to.not.be.fulfilled;
         expect(secondEvent).to.not.be.fulfilled;
@@ -276,7 +277,7 @@ describe("FluentClient", () => {
         socket.emit("writable");
 
         // wait for next tick
-        await new Promise(r => process.nextTick(r));
+        await awaitNextTick();
 
         clock.tick(timeout * 2);
 
@@ -296,7 +297,8 @@ describe("FluentClient", () => {
 
         sinon.assert.notCalled(spy);
 
-        await new Promise(r => process.nextTick(() => process.nextTick(r)));
+        await awaitNextTick();
+        await awaitNextTick();
 
         sinon.assert.calledOnce(spy);
 
@@ -480,7 +482,7 @@ describe("FluentClient", () => {
 
     const firstEvent = client.emit("a", {event: "foo bar"});
 
-    await new Promise(r => setTimeout(r, 100));
+    await awaitTimeout(100);
     sinon.assert.notCalled(spy);
 
     socket.isWritable = true;
@@ -488,6 +490,32 @@ describe("FluentClient", () => {
     await expect(firstEvent).to.eventually.be.fulfilled;
 
     sinon.assert.calledOnce(spy);
+  });
+
+  it("should wait for events to be emitted on disconnect", async () => {
+    const {client, socket} = createFluentClient("test", {
+      disconnect: {waitForPending: true},
+    });
+    socket.isWritable = false;
+    const spy = sinon.spy(client, "flush");
+
+    const firstEvent = client.emit("a", {event: "foo bar"});
+
+    await awaitTimeout(100);
+    sinon.assert.notCalled(spy);
+
+    const disconnectPromise = client.disconnect();
+    await awaitTimeout(100);
+    expect(disconnectPromise).to.not.be.fulfilled;
+    expect(firstEvent).to.not.be.fulfilled;
+
+    socket.isWritable = true;
+    socket.emit("writable");
+
+    await expect(disconnectPromise).to.eventually.be.fulfilled;
+    await expect(firstEvent).to.eventually.be.fulfilled;
+
+    sinon.assert.calledTwice(spy);
   });
 
   it("should reject pending events after shutdown", async () => {
