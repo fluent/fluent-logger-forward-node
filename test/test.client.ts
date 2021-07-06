@@ -15,6 +15,7 @@ import {
   AckShutdownError,
 } from "../src/error";
 import {awaitNextTick, awaitTimeout} from "../src/util";
+import {FluentSocketEvent} from "../src/socket";
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -465,12 +466,11 @@ describe("FluentClient", () => {
     });
   });
 
-  it("should forward errors", done => {
-    const {socket} = createFluentClient("test", {
-      onSocketError: (err: Error) => {
-        expect(err.message).to.equal("test");
-        done();
-      },
+  it("should forward error events", done => {
+    const {socket, client} = createFluentClient("test");
+    client.socketOn(FluentSocketEvent.ERROR, (err: Error) => {
+      expect(err.message).to.equal("test");
+      done();
     });
     socket.emit("error", new Error("test"));
   });

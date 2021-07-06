@@ -8,7 +8,7 @@ import {
 import EventTime from "./event_time";
 import * as protocol from "./protocol";
 import {FluentAuthOptions, FluentAuthSocket} from "./auth";
-import {FluentSocketOptions, FluentSocket} from "./socket";
+import {FluentSocketOptions, FluentSocket, FluentSocketEvent} from "./socket";
 import {
   Queue,
   PackedForwardQueue,
@@ -191,12 +191,6 @@ export type FluentClientOptions = {
    */
   sendQueueNotFlushableLimitDelay?: number;
   /**
-   * An error handler which will receive socket error events
-   *
-   * Useful for logging, these will be handled internally
-   */
-  onSocketError?: (err: Error) => void;
-  /**
    * Retry event submission on failure
    *
    * Warning: This effectively keeps the event in memory until it is successfully sent or retries exhausted
@@ -310,11 +304,10 @@ export class FluentClient {
 
     this.socket = this.createSocket(options.security, options.socket);
 
-    this.socket.on("writable", () => this.handleWritable());
-    this.socket.on("ack", (chunkId: string) => this.handleAck(chunkId));
-    if (options.onSocketError) {
-      this.socket.on("error", options.onSocketError);
-    }
+    this.socket.on(FluentSocketEvent.WRITABLE, () => this.handleWritable());
+    this.socket.on(FluentSocketEvent.ACK, (chunkId: string) =>
+      this.handleAck(chunkId)
+    );
 
     // Only connect if we're able to reconnect and user has not disabled auto connect
     // Otherwise we expect an explicit connect() which will handle connection errors
@@ -325,6 +318,18 @@ export class FluentClient {
       // They can be handled by the socket "error" event handler anyway
       this.connect().catch(() => {});
     }
+  }
+
+  /**
+   * Attaches an event listener to the underlying socket
+   *
+   * See FluentSocketEvent for more info
+   */
+  public socketOn(
+    event: FluentSocketEvent,
+    listener: (...args: any[]) => void // eslint-disable-line @typescript-eslint/no-explicit-any
+  ): void {
+    this.socket.on(event, listener);
   }
 
   /**

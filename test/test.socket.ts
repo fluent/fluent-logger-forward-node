@@ -1,6 +1,11 @@
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
-import {CloseState, FluentSocket, FluentSocketOptions} from "../src/socket";
+import {
+  CloseState,
+  FluentSocket,
+  FluentSocketEvent,
+  FluentSocketOptions,
+} from "../src/socket";
 import * as protocol from "../src/protocol";
 import * as sinon from "sinon";
 
@@ -46,7 +51,7 @@ describe("FluentSocket", () => {
   it("should emit writable on connect", done => {
     const {socket, connectStub} = createFluentSocket({disableReconnect: true});
 
-    socket.on("writable", () => {
+    socket.on(FluentSocketEvent.WRITABLE, () => {
       done();
     });
 
@@ -55,9 +60,33 @@ describe("FluentSocket", () => {
     sinon.assert.calledOnce(connectStub);
   });
 
-  it("should handle drain", done => {
+  it("should not block for draining on write by default", done => {
     const {socket, stream, connectStub} = createFluentSocket({
       disableReconnect: true,
+    });
+
+    const stub = sinon.stub(stream.socket, "write").returns(false);
+
+    socket.connect();
+
+    // On connected
+    socket.once(FluentSocketEvent.WRITABLE, async () => {
+      socket.write(Buffer.from("bla", "utf-8"));
+      sinon.assert.calledOnce(stub);
+      stub.restore();
+      await expect(socket.write(Buffer.from("foo", "utf-8"))).to.eventually.be
+        .fulfilled;
+      done();
+    });
+
+    // can only get one stream
+    sinon.assert.calledOnce(connectStub);
+  });
+
+  it("should handle drain when notWritableWhenDraining", done => {
+    const {socket, stream, connectStub} = createFluentSocket({
+      disableReconnect: true,
+      notWritableWhenDraining: true,
     });
 
     sinon.stub(stream.socket, "write").returns(false);
@@ -65,8 +94,8 @@ describe("FluentSocket", () => {
     socket.connect();
 
     // On connected
-    socket.once("writable", async () => {
-      socket.once("writable", () => {
+    socket.once(FluentSocketEvent.WRITABLE, async () => {
+      socket.once(FluentSocketEvent.WRITABLE, () => {
         done();
       });
       socket.write(Buffer.from("bla", "utf-8"));
@@ -89,7 +118,7 @@ describe("FluentSocket", () => {
     socket.connect();
     sinon.assert.calledOnce(connectStub);
 
-    socket.on("ack", (chunk: protocol.Chunk) => {
+    socket.on(FluentSocketEvent.ACK, (chunk: protocol.Chunk) => {
       expect(chunk).to.equal("chonk");
       done();
     });
@@ -107,7 +136,7 @@ describe("FluentSocket", () => {
     socket.connect();
     sinon.assert.calledOnce(connectStub);
 
-    socket.on("error", (error: Error) => {
+    socket.on(FluentSocketEvent.ERROR, (error: Error) => {
       expect(error.name).to.equal("AuthError");
       expect(stream.socket.destroyed).to.be.true;
       done();
@@ -126,7 +155,7 @@ describe("FluentSocket", () => {
     socket.connect();
     sinon.assert.calledOnce(connectStub);
 
-    socket.on("error", (error: Error) => {
+    socket.on(FluentSocketEvent.ERROR, (error: Error) => {
       expect(error.name).to.equal("UnexpectedMessageError");
       expect(stream.socket.destroyed).to.be.true;
       done();
@@ -143,17 +172,17 @@ describe("FluentSocket", () => {
     socket.connect();
     sinon.assert.calledOnce(connectStub);
 
-    socket.once("close", () => {
+    socket.once(FluentSocketEvent.CLOSE, () => {
       expect(stream.socket.destroyed).to.be.true;
       stream.socket = fakeSocket().socket;
-      socket.once("writable", () => {
+      socket.once(FluentSocketEvent.WRITABLE, () => {
         sinon.assert.calledTwice(connectStub);
         done();
       });
       expect(socket.writable()).to.be.false;
     });
 
-    socket.once("writable", () => {
+    socket.once(FluentSocketEvent.WRITABLE, () => {
       stream.socket.emit("timeout");
     });
   });
@@ -169,10 +198,10 @@ describe("FluentSocket", () => {
 
     const spy = sinon.spy(socket, "connect");
 
-    socket.once("writable", () => {
+    socket.once(FluentSocketEvent.WRITABLE, () => {
       socket.close(CloseState.RECONNECT);
       expect(stream.socket.destroyed).to.be.true;
-      socket.once("writable", () => {
+      socket.once(FluentSocketEvent.WRITABLE, () => {
         sinon.assert.calledOnce(spy);
         sinon.assert.calledTwice(connectStub);
         done();
@@ -190,8 +219,8 @@ describe("FluentSocket", () => {
     const spy = sinon.spy(socket, "close");
 
     sinon.assert.calledOnce(connectStub);
-    socket.once("writable", () => {
-      sinon.stub(stream.socket, "writable").get(() => false);
+    socket.once(FluentSocketEvent.WRITABLE, () => {
+      sinon.stub(stream.socket, FluentSocketEvent.WRITABLE).get(() => false);
       sinon.stub(stream.socket, "destroy");
       expect(socket.writable()).to.be.false;
       expect(socket.writable()).to.be.false;
@@ -212,7 +241,7 @@ describe("FluentSocket", () => {
 
     const spy = sinon.spy(socket, "connect");
 
-    socket.on("writable", async () => {
+    socket.on(FluentSocketEvent.WRITABLE, async () => {
       await socket.disconnect();
       expect((<any>socket).reconnectTimeoutId).to.be.null;
       sinon.assert.notCalled(spy);
@@ -227,8 +256,8 @@ describe("FluentSocket", () => {
 
     sinon.assert.calledOnce(connectStub);
 
-    socket.once("writable", async () => {
-      sinon.stub(stream.socket, "writable").get(() => false);
+    socket.once(FluentSocketEvent.WRITABLE, async () => {
+      sinon.stub(stream.socket, FluentSocketEvent.WRITABLE).get(() => false);
       await expect(
         socket.write(Buffer.from("foo", "utf-8"))
       ).to.eventually.be.rejectedWith(SocketNotWritableError);

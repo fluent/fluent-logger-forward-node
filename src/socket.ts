@@ -10,6 +10,7 @@ import {
 } from "./error";
 import * as protocol from "./protocol";
 import {PassThrough, Duplex} from "stream";
+import {awaitNextTick} from "./util";
 
 /**
  * Reconnection settings for the socket
@@ -87,6 +88,15 @@ export type FluentSocketOptions = {
    * Defaults to false
    */
   disableReconnect?: boolean;
+  /**
+   * Treat the socket as not writable when draining.
+   *
+   * This can reduce memory use, but only when the client slows down emission.
+   * Otherwise either the send buffer fills up or the FluentClient.sendQueue fills up.
+   *
+   * Defaults to false
+   */
+  notWritableWhenDraining?: boolean;
 };
 
 enum SocketState {
@@ -131,6 +141,7 @@ enum SocketState {
   ESTABLISHED,
   /**
    * In this state, the socket has blocked writes, as the kernel buffer is full.
+   * See [net.Socket.write](https://nodejs.org/api/net.html#net_socket_write_data_encoding_callback) for more info.
    *
    * Can read
    * No write
@@ -179,6 +190,61 @@ enum SocketState {
   FATAL,
 }
 
+export enum FluentSocketEvent {
+  /**
+   * Emitted once the socket has successfully been opened to the upstream server
+   *
+   * Provides no arguments
+   */
+  CONNECTED = "connected",
+  /**
+   * Emitted once the socket is ready to receive Messages
+   *
+   * Provides no arguments
+   */
+  ESTABLISHED = "established",
+  /**
+   * Emitted when the socket is starting to fill up the send buffer, and stops accepting writes.
+   * See [net.Socket.write](https://nodejs.org/api/net.html#net_socket_write_data_encoding_callback) for more info.
+   *
+   * Provides no arguments
+   */
+  DRAINING = "draining",
+  /**
+   * Emit once the socket has emptied the send buffer again.
+   * See [net.Socket 'drain'](https://nodejs.org/api/net.html#net_event_drain) for more info.
+   *
+   * Provides no arguments
+   */
+  DRAINED = "drained",
+  /**
+   * Emitted when the socket has timed out. It will be reconnected once the socket gets an attempted write (or next writable call)
+   *
+   * Provides no arguments
+   */
+  TIMEOUT = "timeout",
+  /**
+   * Emitted when the socket receives an ACK message. Mostly for internal use.
+   */
+  ACK = "ack",
+  /**
+   * Emitted when the socket is writable. This is emitted at the same time as the ESTABLISHED and the DRAINED events.
+   *
+   * Provides no arguments
+   */
+  WRITABLE = "writable",
+  /**
+   * Emitted when the socket receives an error.
+   *
+   * Provides one argument - the Error object associated with it.
+   */
+  ERROR = "error",
+  /**
+   * Emitted when the socket is closed for any reason.
+   */
+  CLOSE = "close",
+}
+
 /**
  * How to close the socket
  */
@@ -218,6 +284,7 @@ export class FluentSocket extends EventEmitter {
   private tlsEnabled: boolean;
   private tlsOptions: tls.ConnectionOptions;
   private reconnectEnabled: boolean;
+  private writableWhenDraining: boolean;
   private reconnect: ReconnectOptions;
   /**
    * Used so we can read from the socket through an AsyncIterable.
@@ -247,6 +314,7 @@ export class FluentSocket extends EventEmitter {
     this.tlsOptions = options.tls || {};
 
     this.reconnectEnabled = !options.disableReconnect;
+    this.writableWhenDraining = !options.notWritableWhenDraining;
     this.reconnect = {
       backoff: 2,
       delay: 500, // default is 500ms
@@ -275,7 +343,7 @@ export class FluentSocket extends EventEmitter {
     ) {
       if (this.state === SocketState.DISCONNECTING) {
         // Try again once the socket has fully closed
-        await new Promise(r => process.nextTick(r));
+        await awaitNextTick();
         return await this.connect();
       } else {
         // noop, we're connected
@@ -379,8 +447,8 @@ export class FluentSocket extends EventEmitter {
 
     return new Promise<void>((resolve, reject) => {
       // This may call both resolve and reject, but the ES standard says this is OK
-      this.once("connected", () => resolve());
-      this.once("error", err => reject(err));
+      this.once(FluentSocketEvent.CONNECTED, () => resolve());
+      this.once(FluentSocketEvent.ERROR, err => reject(err));
     });
   }
 
@@ -390,7 +458,7 @@ export class FluentSocket extends EventEmitter {
   private handleConnect(): void {
     this.connectAttempts = 0;
     this.state = SocketState.CONNECTED;
-    this.emit("connected");
+    this.emit(FluentSocketEvent.CONNECTED);
     this.onConnected();
   }
 
@@ -436,7 +504,7 @@ export class FluentSocket extends EventEmitter {
   private handleTimeout(): void {
     if (this.socket !== null) {
       this.state = SocketState.IDLE;
-      this.socket.end(() => this.emit("timeout"));
+      this.socket.end(() => this.emit(FluentSocketEvent.TIMEOUT));
     } else {
       this.close(
         CloseState.FATAL,
@@ -484,7 +552,7 @@ export class FluentSocket extends EventEmitter {
     // We may not have noticed that we were draining, or we may have moved to a different state in the mean time
     if (this.state === SocketState.DRAINING) {
       this.state = SocketState.ESTABLISHED;
-      this.emit("drain");
+      this.emit(FluentSocketEvent.DRAINED);
       this.onWritable();
     }
   }
@@ -503,7 +571,7 @@ export class FluentSocket extends EventEmitter {
    */
   protected onEstablished(): void {
     this.state = SocketState.ESTABLISHED;
-    this.emit("established");
+    this.emit(FluentSocketEvent.ESTABLISHED);
     this.onWritable();
   }
 
@@ -513,7 +581,7 @@ export class FluentSocket extends EventEmitter {
    * for example, the server might disconnect in between emitting the event and attempting a write.
    */
   protected onWritable(): void {
-    this.emit("writable");
+    this.emit(FluentSocketEvent.WRITABLE);
   }
 
   /**
@@ -522,14 +590,14 @@ export class FluentSocket extends EventEmitter {
    * @param error The error
    */
   protected onError(error: Error): void {
-    this.emit("error", error);
+    this.emit(FluentSocketEvent.ERROR, error);
   }
 
   /**
    * Handles a close event from the socket
    */
   protected onClose(): void {
-    this.emit("close");
+    this.emit(FluentSocketEvent.CLOSE);
   }
 
   // This is the EventEmitter signature
@@ -578,7 +646,7 @@ export class FluentSocket extends EventEmitter {
    * @param chunkId The chunk from the ack event
    */
   protected onAck(chunkId: protocol.Chunk) {
-    this.emit("ack", chunkId);
+    this.emit(FluentSocketEvent.ACK, chunkId);
   }
 
   /**
@@ -651,7 +719,7 @@ export class FluentSocket extends EventEmitter {
   }
 
   /**
-   * Check if the socket is writable
+   * Check if the socket is writable for clients
    *
    * @returns If the socket is in a state to be written to
    */
@@ -671,8 +739,9 @@ export class FluentSocket extends EventEmitter {
           resolve();
         }
       });
-      if (!keepWriting) {
+      if (!keepWriting && !this.writableWhenDraining) {
         this.state = SocketState.DRAINING;
+        this.emit(FluentSocketEvent.DRAINING);
       }
     });
   }
