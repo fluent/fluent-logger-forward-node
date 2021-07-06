@@ -1,6 +1,7 @@
 export {FluentClient} from "./client";
 export {FluentServer} from "./server";
 export {default as EventTime} from "./event_time";
+export {FluentSocketEvent} from "./socket";
 
 export type {FluentSocketOptions, ReconnectOptions} from "./socket";
 export type {FluentAuthOptions} from "./auth";

@@ -3,7 +3,11 @@ import * as chaiAsPromised from "chai-as-promised";
 import * as sinon from "sinon";
 
 import {FluentAuthSocket, FluentAuthOptions} from "../src/auth";
-import {CloseState, FluentSocketOptions} from "../src/socket";
+import {
+  CloseState,
+  FluentSocketEvent,
+  FluentSocketOptions,
+} from "../src/socket";
 import * as protocol from "../src/protocol";
 import {fakeSocket} from "./helpers";
 
@@ -52,7 +56,7 @@ describe("FluentAuthSocket", () => {
     // not writable until after we send pong
     let writableOk = false;
 
-    socket.once("connected", () => {
+    socket.once(FluentSocketEvent.CONNECTED, () => {
       stream.writable.write(
         protocol.encode(protocol.generateHelo(serverKeyInfo.nonce, "", true))
       );
@@ -80,7 +84,7 @@ describe("FluentAuthSocket", () => {
       writableOk = true;
     });
 
-    socket.once("writable", () => {
+    socket.once(FluentSocketEvent.WRITABLE, () => {
       expect(writableOk).to.be.true;
       expect(socket.writable()).to.be.true;
       done();
@@ -100,7 +104,7 @@ describe("FluentAuthSocket", () => {
     // not writable until after we send pong
     let writableOk = false;
 
-    socket.once("connected", () => {
+    socket.once(FluentSocketEvent.CONNECTED, () => {
       stream.writable.write(
         protocol.encode(
           protocol.generateHelo(serverKeyInfo.nonce, "test", true)
@@ -131,7 +135,7 @@ describe("FluentAuthSocket", () => {
       writableOk = true;
     });
 
-    socket.once("writable", () => {
+    socket.once(FluentSocketEvent.WRITABLE, () => {
       expect(writableOk).to.be.true;
       expect(socket.writable()).to.be.true;
       done();
@@ -146,12 +150,12 @@ describe("FluentAuthSocket", () => {
       createFluentSocket(defaultAuthOptions);
 
     let errorOk = false;
-    socket.once("connected", () => {
+    socket.once(FluentSocketEvent.CONNECTED, () => {
       stream.writable.write(protocol.encode(protocol.generateAck("chonk")));
       errorOk = true;
     });
 
-    socket.on("error", (error: Error) => {
+    socket.on(FluentSocketEvent.ERROR, (error: Error) => {
       expect(errorOk).to.be.true;
       expect(error.name).to.equal("UnexpectedMessageError");
       expect(stream.socket.destroyed).to.be.true;
@@ -169,7 +173,7 @@ describe("FluentAuthSocket", () => {
 
     let errorOk = false;
 
-    socket.once("connected", () => {
+    socket.once(FluentSocketEvent.CONNECTED, () => {
       stream.writable.write(
         protocol.encode(protocol.generateHelo(serverKeyInfo.nonce, "", true))
       );
@@ -191,7 +195,7 @@ describe("FluentAuthSocket", () => {
       errorOk = true;
     });
 
-    socket.on("error", (error: Error) => {
+    socket.on(FluentSocketEvent.ERROR, (error: Error) => {
       expect(errorOk).to.be.true;
       expect(error.name).to.equal("UnexpectedMessageError");
       expect(stream.socket.destroyed).to.be.true;
@@ -210,7 +214,7 @@ describe("FluentAuthSocket", () => {
     // not writable until after we send pong
     let errorOk = false;
 
-    socket.once("connected", () => {
+    socket.once(FluentSocketEvent.CONNECTED, () => {
       stream.writable.write(
         protocol.encode(protocol.generateHelo(serverKeyInfo.nonce, "", true))
       );
@@ -233,7 +237,7 @@ describe("FluentAuthSocket", () => {
       errorOk = true;
     });
 
-    socket.on("error", (error: Error) => {
+    socket.on(FluentSocketEvent.ERROR, (error: Error) => {
       expect(errorOk).to.be.true;
       expect(error.name).to.equal("AuthError");
       expect(error.message).to.match(/nuuuu/);
@@ -253,7 +257,7 @@ describe("FluentAuthSocket", () => {
     // not writable until after we send pong
     let errorOk = false;
 
-    socket.once("connected", () => {
+    socket.once(FluentSocketEvent.CONNECTED, () => {
       stream.writable.write(
         protocol.encode(protocol.generateHelo(serverKeyInfo.nonce, "", true))
       );
@@ -279,7 +283,7 @@ describe("FluentAuthSocket", () => {
       errorOk = true;
     });
 
-    socket.on("error", (error: Error) => {
+    socket.on(FluentSocketEvent.ERROR, (error: Error) => {
       expect(errorOk).to.be.true;
       expect(error.name).to.equal("SharedKeyMismatchError");
       expect(stream.socket.destroyed).to.be.true;
@@ -308,7 +312,7 @@ describe("FluentAuthSocket", () => {
     let connectedCalls = 0,
       dataCalls = 0;
 
-    socket.on("connected", () => {
+    socket.on(FluentSocketEvent.CONNECTED, () => {
       connectedCalls += 1;
       stream.writable.write(
         protocol.encode(protocol.generateHelo(serverKeyInfo.nonce, "", true))
@@ -337,9 +341,9 @@ describe("FluentAuthSocket", () => {
       );
     };
     stream.readable.on("data", dataHandler);
-    socket.on("error", console.log);
+    socket.on(FluentSocketEvent.ERROR, console.log);
 
-    socket.once("writable", () => {
+    socket.once(FluentSocketEvent.WRITABLE, () => {
       sinon.assert.calledOnce(connectStub);
       expect(connectedCalls).to.equal(1);
       expect(dataCalls).to.equal(1);
@@ -348,7 +352,7 @@ describe("FluentAuthSocket", () => {
       stream.readable.on("data", dataHandler);
       socket.close(CloseState.RECONNECT);
       // new stream
-      socket.once("writable", () => {
+      socket.once(FluentSocketEvent.WRITABLE, () => {
         expect(oldStream.socket.destroyed).to.be.true;
         sinon.assert.calledTwice(connectStub);
         expect(connectedCalls).to.equal(2);
