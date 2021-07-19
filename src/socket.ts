@@ -68,6 +68,8 @@ export type FluentSocketOptions = {
    * The socket timeout to set. After timing out, the socket will be idle and reconnect once the client wants to write something.
    *
    * Defaults to 3000 (3 seconds)
+   *
+   * Set to -1 for no timeout
    */
   timeout?: number;
   /**
@@ -387,7 +389,8 @@ export class FluentSocket extends EventEmitter {
 
     this.reconnectTimeoutId = setTimeout(() => {
       this.reconnectTimeoutId = null;
-      this.connect();
+      // Ignore errors if there are any
+      this.connect().catch(() => {});
     }, reconnectInterval);
   }
 
@@ -404,7 +407,11 @@ export class FluentSocket extends EventEmitter {
    * @returns A new socket to use for the connection
    */
   private createTcpSocket(): net.Socket {
-    return net.createConnection({...this.socketParams, timeout: this.timeout});
+    let opts: net.NetConnectOpts = this.socketParams;
+    if (this.timeout >= 0) {
+      opts = {...opts, timeout: this.timeout};
+    }
+    return net.createConnection(opts);
   }
 
   /**
@@ -703,7 +710,8 @@ export class FluentSocket extends EventEmitter {
     ) {
       // Resume from idle state
       if (this.state === SocketState.IDLE) {
-        this.connect();
+        // Ignore errors if there are any
+        this.connect().catch(() => {});
       }
       return false;
     }
