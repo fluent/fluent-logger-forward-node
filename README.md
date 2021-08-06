@@ -13,7 +13,7 @@ Built upon [fluent-logger-node](https://github.com/fluent/fluent-logger-node).
     $ npm install @fluent-org/logger
 
 ## Client
-`@fluent-org/logger` provides a fully functional client that implements the Forward protocol. It supports reconnection, acknowledgements, timeouts, event retries, and more, and exposes its functionality through simple typed Promise interface.
+`@fluent-org/logger` provides a fully functional client that implements the Forward protocol. It supports reconnection, acknowledgements, timeouts, event retries, and more, and exposes its functionality via a simple typed Promise interface.
 
 For a full list of the client options and methods, see the [FluentClient docs](https://fluent.github.io/fluent-logger-bulk-node/classes/fluentclient.html)
 
@@ -65,7 +65,7 @@ const logger = new FluentClient("tag_prefix", {
 
 The emit method has following signature
 
-```js
+```typescript
 emit(data: Record<string, any>): Promise<void>;
 emit(data: Record<string, any>, timestamp: number | Date | EventTime): Promise<void>;
 emit(label: string, data: Record<string, any>): Promise<void>;
@@ -74,8 +74,8 @@ emit(label: string, data: Record<string, any>, timestamp: number | Date | EventT
 
 The returned Promise is resolved once the event is written to the socket, or rejected if an error occurs.
 
-### Fluentd acknowledgements
-The Fluent forward protocol provides explicit support for acknowledgements, which allow the client to be sure that the event reached its destination. 
+### Acknowledgements
+The [Fluent forward protocol](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1) provides explicit support for acknowledgements, which allow the client to be sure that the event reached its destination. 
 
 Enabling acknowledgements means that the promise returned by `emit` will be resolved once the client receives an explicit acknowledgement from the server.
 ```js
@@ -86,7 +86,7 @@ const logger = new FluentClient("tag_prefix", {
 ```
 
 ### Event modes
-The Fluent forward protocol provides multiple message modes, `Message`, `Forward`, `PackedForward`(default), `CompressedPackedForward`. The Fluent client supports all of them.
+The [Fluent forward protocol](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1) provides multiple message modes, `Message`, `Forward`, `PackedForward`(default), `CompressedPackedForward`. The Fluent client supports all of them.
 
 
 ```js

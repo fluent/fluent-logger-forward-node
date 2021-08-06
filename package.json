@@ -22,10 +22,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fluent/fluent-logger-bulk-node"
+    "url": "https://github.com/fluent/fluent-logger-forward-node"
   },
-  "bugs": "https://github.com/fluent/fluent-logger-bulk-node/issues",
-  "homepage": "https://fluent.github.io/fluent-logger-bulk-node/",
+  "bugs": "https://github.com/fluent/fluent-logger-forward-node/issues",
+  "homepage": "https://fluent.github.io/fluent-logger-forward-node/",
   "engines": {
     "node": ">=12.9.0"
   },
