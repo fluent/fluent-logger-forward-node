@@ -1,7 +1,7 @@
 # @fluent-org/logger
-[![Build Status](https://github.com/fluent/fluent-logger-bulk-node/actions/workflows/main.yml/badge.svg)](https://github.com/fluent/fluent-logger-bulk-node/actions)
+[![Build Status](https://github.com/fluent/fluent-logger-forward-node/actions/workflows/main.yml/badge.svg)](https://github.com/fluent/fluent-logger-forward-node/actions)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Docs](https://img.shields.io/badge/Docs-latest-informational)](https://fluent.github.io/fluent-logger-bulk-node/)
+[![Docs](https://img.shields.io/badge/Docs-latest-informational)](https://fluent.github.io/fluent-logger-forward-node/)
 
 [Fluent Forward Protocol](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1) implementation for Node.js. 
 Built upon [fluent-logger-node](https://github.com/fluent/fluent-logger-node).
@@ -15,7 +15,7 @@ Built upon [fluent-logger-node](https://github.com/fluent/fluent-logger-node).
 ## Client
 `@fluent-org/logger` provides a fully functional client that implements the Forward protocol. It supports reconnection, acknowledgements, timeouts, event retries, and more, and exposes its functionality via a simple typed Promise interface.
 
-For a full list of the client options and methods, see the [FluentClient docs](https://fluent.github.io/fluent-logger-bulk-node/classes/fluentclient.html)
+For a full list of the client options and methods, see the [FluentClient docs](https://fluent.github.io/fluent-logger-forward-node/classes/fluentclient.html)
 
 ### Prerequisites
 The fluent daemon should be listening in forward mode.
@@ -75,7 +75,7 @@ emit(label: string, data: Record<string, any>, timestamp: number | Date | EventT
 The returned Promise is resolved once the event is written to the socket, or rejected if an error occurs.
 
 ### Acknowledgements
-The [Fluent forward protocol](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1) provides explicit support for acknowledgements, which allow the client to be sure that the event reached its destination. 
+The [Fluent forward protocol](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1) provides explicit support for acknowledgements, which allow the client to be sure that the event reached its destination.
 
 Enabling acknowledgements means that the promise returned by `emit` will be resolved once the client receives an explicit acknowledgement from the server.
 ```js
@@ -246,7 +246,7 @@ Fluentd configuration:
 
 ### EventTime support
 
-We can also specify an [EventTime](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format) as a timestamp. See the [EventTime docs](https://fluent.github.io/fluent-logger-bulk-node/classes/eventtime.html)
+We can also specify an [EventTime](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format) as a timestamp. See the [EventTime docs](https://fluent.github.io/fluent-logger-forward-node/classes/eventtime.html)
 
 ```js
 const FluentClient = require("@fluent-org/logger").FluentClient;
@@ -320,7 +320,7 @@ See the [FluentD docs](https://docs.fluentd.org/output/forward) for more info.
 
 Alternatively, see the [Fluent Bit docs](https://docs.fluentbit.io/manual/pipeline/outputs/forward) for info on setting up Fluent Bit.
 
-For a full list of the server options and methods, see the [FluentServer docs](https://fluent.github.io/fluent-logger-bulk-node/classes/fluentserver.html)
+For a full list of the server options and methods, see the [FluentServer docs](https://fluent.github.io/fluent-logger-forward-node/classes/fluentserver.html)
 
 
 ## License
