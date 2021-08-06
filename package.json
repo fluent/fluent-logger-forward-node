@@ -1,7 +1,7 @@
 {
-  "name": "fluentd-node",
+  "name": "@fluent-org/logger",
   "version": "0.0.0",
-  "description": "A fluent protocol implementation in node",
+  "description": "A node fluent protocol compatible logger",
   "main": "./build/src/index.js",
   "types": "./build/src/index.d.ts",
   "bin": {},
@@ -22,10 +22,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jamiees2/fluentd-node"
+    "url": "https://github.com/fluent/fluent-logger-bulk-node"
   },
-  "bugs": "https://github.com/jamiees2/fluentd-node/issues",
-  "homepage": "https://jamiees2.github.io/fluentd-node/",
+  "bugs": "https://github.com/fluent/fluent-logger-bulk-node/issues",
+  "homepage": "https://fluent.github.io/fluent-logger-bulk-node/",
   "engines": {
     "node": ">=12.9.0"
   },

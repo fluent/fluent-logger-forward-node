@@ -1,26 +1,26 @@
-# fluentd-node 
-[![Build Status](https://github.com/jamiees2/fluentd-node/actions/workflows/main.yml/badge.svg)](https://github.com/jamiees2/fluentd-node/actions)
+# @fluent-org/logger
+[![Build Status](https://github.com/fluent/fluent-logger-bulk-node/actions/workflows/main.yml/badge.svg)](https://github.com/fluent/fluent-logger-bulk-node/actions)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Docs](https://img.shields.io/badge/Docs-latest-informational)](https://jamiees2.github.io/fluentd-node/)
+[![Docs](https://img.shields.io/badge/Docs-latest-informational)](https://fluent.github.io/fluent-logger-bulk-node/)
 
 [Fluent Forward Protocol](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1) implementation for Node.js. 
 Built upon [fluent-logger-node](https://github.com/fluent/fluent-logger-node).
 
-[![NPM](https://nodei.co/npm/fluentd-node.png?downloads=true&downloadRank=true)](https://nodei.co/npm/fluentd-node/)
+[![NPM](https://nodeico.herokuapp.com/@fluent-org/logger.svg)](https://npmjs.com/package/@fluent-org/logger)
 
 ## Install
 
-    $ npm install fluentd-node
+    $ npm install @fluent-org/logger
 
 ## Client
-`fluentd-node` provides a fully functional client that implements the Forward protocol. It supports reconnection, acknowledgements, timeouts, event retries, and more, and exposes its functionality through simple typed Promise interface.
+`@fluent-org/logger` provides a fully functional client that implements the Forward protocol. It supports reconnection, acknowledgements, timeouts, event retries, and more, and exposes its functionality through simple typed Promise interface.
 
-For a full list of the client options and methods, see the [FluentClient docs](https://jamiees2.github.io/fluentd-node/classes/fluentclient.html)
+For a full list of the client options and methods, see the [FluentClient docs](https://fluent.github.io/fluent-logger-bulk-node/classes/fluentclient.html)
 
 ### Prerequisites
 The fluent daemon should be listening in forward mode.
 
-A simple starting configuration is the following:
+A simple starting configuration for Fluentd is the following:
 ```aconf
 <source>
   @type forward
@@ -34,10 +34,26 @@ A simple starting configuration is the following:
 
 See the [FluentD docs](https://docs.fluentd.org/input/forward) for more info.
 
-### Sending an event record to Fluentd
+A similar starting configuration for Fluent Bit is the following:
+```ini
+[INPUT]
+    Name              forward
+    Listen            0.0.0.0
+    Port              24224
+    Buffer_Chunk_Size 1M
+    Buffer_Max_Size   6M
+
+[OUTPUT]
+    Name   stdout
+    Match  *
+```
+
+See the [Fluent Bit docs](https://docs.fluentbit.io/manual/pipeline/inputs/forward) for more info.
+
+### Sending an event record to an upstream Fluent server
 
 ```js
-const FluentClient = require("fluentd-node").FluentClient;
+const FluentClient = require("@fluent-org/logger").FluentClient;
 const logger = new FluentClient("tag_prefix", {
   socket: {
     host: "localhost",
@@ -59,22 +75,22 @@ emit(label: string, data: Record<string, any>, timestamp: number | Date | EventT
 The returned Promise is resolved once the event is written to the socket, or rejected if an error occurs.
 
 ### Fluentd acknowledgements
-Fluentd provides explicit support for acknowledgements, which allow the client to be sure that the event reached its destination. 
+The Fluent forward protocol provides explicit support for acknowledgements, which allow the client to be sure that the event reached its destination. 
 
 Enabling acknowledgements means that the promise returned by `emit` will be resolved once the client receives an explicit acknowledgement from the server.
 ```js
-const FluentClient = require("fluentd-node").FluentClient;
+const FluentClient = require("@fluent-org/logger").FluentClient;
 const logger = new FluentClient("tag_prefix", {
   ack: {}
 });
 ```
 
 ### Event modes
-Fluentd provides multiple message modes, `Message`, `Forward`, `PackedForward`(default), `CompressedPackedForward`. The Fluent client supports all of them.
+The Fluent forward protocol provides multiple message modes, `Message`, `Forward`, `PackedForward`(default), `CompressedPackedForward`. The Fluent client supports all of them.
 
 
 ```js
-const FluentClient = require("fluentd-node").FluentClient;
+const FluentClient = require("@fluent-org/logger").FluentClient;
 const logger = new FluentClient("tag_prefix", {
   eventMode: "Message" | "Forward" | "PackedForward" | "CompressedPackedForward"
 });
@@ -114,7 +130,7 @@ const logger = new FluentClient("tag_prefix", {
 });
 ```
 
-Server configuration:
+Fluentd configuration:
 
 ```aconf
 <source>
@@ -154,7 +170,7 @@ const logger = new FluentClient("tag_prefix", {
 });
 ```
 
-Server configuration:
+Fluentd configuration:
 
 ```aconf
 <source>
@@ -204,7 +220,7 @@ const logger = new FluentClient("tag_prefix", {
 });
 ```
 
-Server configuration:
+Fluentd configuration:
 
 ```aconf
 <source>
@@ -230,11 +246,11 @@ Server configuration:
 
 ### EventTime support
 
-We can also specify [EventTime](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format) as timestamp. See the [EventTime docs](https://jamiees2.github.io/fluentd-node/classes/eventtime.html)
+We can also specify an [EventTime](https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1#eventtime-ext-format) as a timestamp. See the [EventTime docs](https://fluent.github.io/fluent-logger-bulk-node/classes/eventtime.html)
 
 ```js
-const FluentClient = require("fluentd-node").FluentClient;
-const EventTime = require("fluentd-node").EventTime;
+const FluentClient = require("@fluent-org/logger").FluentClient;
+const EventTime = require("@fluent-org/logger").EventTime;
 const eventTime = new EventTime(1489547207, 745003500); // 2017-03-15 12:06:47 +0900
 const logger = new FluentClient("tag_prefix", {
   socket: {
@@ -250,7 +266,7 @@ logger.emit("tag", { message: "This is a message" }, eventTime);
 The Fluent client will manage errors internally, and reject promises on errors. If you"d like to access the non-user facing internal errors, you can do so by passing `errorHandler`
 
 ```js
-const FluentClient = require("fluentd-node").FluentClient;
+const FluentClient = require("@fluent-org/logger").FluentClient;
 const logger = new FluentClient("tag_prefix", {
   onSocketError: (err: Error) => {
     console.error("error!", err)
@@ -261,17 +277,17 @@ const logger = new FluentClient("tag_prefix", {
 ### Retrying events
 Sometimes it makes sense to resubmit events if their initial submission failed. You can do this by specifying `eventRetry`.
 ```js
-const FluentClient = require("fluentd-node").FluentClient;
+const FluentClient = require("@fluent-org/logger").FluentClient;
 const logger = new FluentClient("tag_prefix", {
   eventRetry: {}
 });
 ```
 
 ## Server
-`fluentd-node` includes a fully functional forward server which can be used as a downstream Fluent sink. 
+`@fluent-org/logger` includes a fully functional forward server which can be used as a downstream Fluent sink. 
 
 ```js
-const FluentServer = require("fluentd-node").FluentServer;
+const FluentServer = require("@fluent-org/logger").FluentServer;
 
 const server = new FluentServer({ listenOptions: { port: 24224 }});
 
@@ -302,7 +318,9 @@ Fluentd config:
 
 See the [FluentD docs](https://docs.fluentd.org/output/forward) for more info.
 
-For a full list of the server options and methods, see the [FluentServer docs](https://jamiees2.github.io/fluentd-node/classes/fluentserver.html)
+Alternatively, see the [Fluent Bit docs](https://docs.fluentbit.io/manual/pipeline/outputs/forward) for info on setting up Fluent Bit.
+
+For a full list of the server options and methods, see the [FluentServer docs](https://fluent.github.io/fluent-logger-bulk-node/classes/fluentserver.html)
 
 
 ## License
