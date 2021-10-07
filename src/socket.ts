@@ -453,9 +453,18 @@ export class FluentSocket extends EventEmitter {
     this.processMessages(protocol.decodeServerStream(this.passThroughStream));
 
     return new Promise<void>((resolve, reject) => {
-      // This may call both resolve and reject, but the ES standard says this is OK
-      this.once(FluentSocketEvent.CONNECTED, () => resolve());
-      this.once(FluentSocketEvent.ERROR, err => reject(err));
+      const onConnected = () => {
+        resolve();
+        // Avoid a memory leak and remove the other listener
+        this.removeListener(FluentSocketEvent.ERROR, onError);
+      };
+      const onError = (err: Error) => {
+        reject(err);
+        // Avoid a memory leak and remove the other listener
+        this.removeListener(FluentSocketEvent.CONNECTED, onConnected);
+      };
+      this.once(FluentSocketEvent.CONNECTED, onConnected);
+      this.once(FluentSocketEvent.ERROR, onError);
     });
   }
 
@@ -483,7 +492,7 @@ export class FluentSocket extends EventEmitter {
         this.onMessage(message);
       }
     } catch (e) {
-      this.close(CloseState.RECONNECT, e);
+      this.close(CloseState.RECONNECT, e as Error);
     }
   }
 

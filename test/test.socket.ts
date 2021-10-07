@@ -60,6 +60,19 @@ describe("FluentSocket", () => {
     sinon.assert.calledOnce(connectStub);
   });
 
+  it("should not preserve error handlers after connect", done => {
+    const {socket, connectStub} = createFluentSocket({disableReconnect: true});
+
+    socket.on(FluentSocketEvent.WRITABLE, () => {
+      expect(socket.listenerCount(FluentSocketEvent.ERROR)).to.equal(0);
+      done();
+    });
+
+    socket.connect();
+
+    sinon.assert.calledOnce(connectStub);
+  });
+
   it("should not block for draining on write by default", done => {
     const {socket, stream, connectStub} = createFluentSocket({
       disableReconnect: true,
