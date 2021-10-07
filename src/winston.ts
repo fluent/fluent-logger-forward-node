@@ -14,6 +14,7 @@ interface TransportOptions {
   labels: Record<string, unknown>;
   handleExceptions?: boolean;
   levels?: unknown;
+  tag?: string;
 }
 
 /**
@@ -32,6 +33,9 @@ export class FluentTransport extends Transport {
   // logger
   private logger: null | FluentClient = null;
 
+  // tag
+  private tag = "";
+
   /**
    * Creates an instance of LokiTransport.
    * @param {TransportOptions} options
@@ -43,6 +47,7 @@ export class FluentTransport extends Transport {
 
     this.labels = options.labels;
     this.host = options.host;
+    this.tag = options.host;
 
     this.initLogger(fluentOptions);
   }
@@ -60,9 +65,9 @@ export class FluentTransport extends Transport {
       },
     };
 
-    console.log({...defaultOptions, ...fluentOptions});
+    const options = {...defaultOptions, ...fluentOptions};
 
-    this.logger = new FluentClient("ld", {...defaultOptions, ...fluentOptions});
+    this.logger = new FluentClient(this.tag ?? "", options);
   }
 
   /**
