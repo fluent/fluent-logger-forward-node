@@ -1,7 +1,7 @@
 import * as net from "net";
 import * as tls from "tls";
 import * as crypto from "crypto";
-import * as EventEmitter from "events";
+import {EventEmitter} from "events";
 import * as protocol from "./protocol";
 import {UnexpectedMessageError} from "./error";
 
@@ -190,7 +190,7 @@ export class FluentServer extends EventEmitter {
             const pong = protocol.generatePong(
               this.security.serverHostname,
               false,
-              e.message,
+              (e as Error).message,
               clientInfo.sharedKeyInfo
             );
             socket.write(protocol.encodeMessage(pong));

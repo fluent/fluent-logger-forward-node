@@ -1,6 +1,6 @@
 import * as net from "net";
 import * as tls from "tls";
-import * as EventEmitter from "events";
+import {EventEmitter} from "events";
 import {
   SocketTimeoutError,
   UnexpectedMessageError,

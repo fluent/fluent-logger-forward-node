@@ -1,6 +1,6 @@
 import * as protocol from "../protocol";
-import {DeferredPromise} from "p-defer";
 import {DroppedError, QueueShutdownError} from "../error";
+import {DeferredPromise} from "../util";
 
 /**
  * Every queue must have this type of data

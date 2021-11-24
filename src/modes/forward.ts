@@ -1,11 +1,11 @@
-import * as pDefer from "p-defer";
 import {Queue, PacketData} from "./queue";
 import * as protocol from "../protocol";
+import {pDefer, DeferredPromise} from "../util";
 
 type ForwardRecord = {
   tag: protocol.Tag;
   entries: protocol.Entry[];
-  deferred: pDefer.DeferredPromise<void>;
+  deferred: DeferredPromise<void>;
 };
 
 /**

@@ -16,10 +16,14 @@ import {
   MessageQueue,
   ForwardQueue,
 } from "./modes";
-import {DeferredPromise} from "p-defer";
 import * as crypto from "crypto";
 import {EventRetrier, EventRetryOptions} from "./event_retrier";
-import {awaitAtMost, awaitNextTick, awaitTimeout} from "./util";
+import {
+  DeferredPromise,
+  awaitAtMost,
+  awaitNextTick,
+  awaitTimeout,
+} from "./util";
 
 type AckData = {
   timeoutId: NodeJS.Timeout;

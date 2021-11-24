@@ -1,6 +1,6 @@
-import * as pDefer from "p-defer";
 import {PacketData, Queue} from "./queue";
 import * as protocol from "../protocol";
+import {pDefer, DeferredPromise} from "../util";
 
 type PackedRecord = {
   tag: protocol.Tag;
@@ -11,7 +11,7 @@ type PackedRecord = {
    * Useful for concatenating them all together later
    */
   size: number;
-  deferred: pDefer.DeferredPromise<void>;
+  deferred: DeferredPromise<void>;
 };
 
 /**

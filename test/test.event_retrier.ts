@@ -1,9 +1,9 @@
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import * as sinon from "sinon";
-import * as pDefer from "p-defer";
 import {EventRetrier} from "../src/event_retrier";
 import {RetryShutdownError} from "../src/error";
+import {pDefer} from "../src/util";
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
