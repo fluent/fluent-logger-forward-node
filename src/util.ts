@@ -24,3 +24,18 @@ export const awaitNextTick = (): Promise<void> => {
 export const awaitTimeout = (timeout: number): Promise<void> => {
   return new Promise(r => setTimeout(r, timeout));
 };
+
+export interface DeferredPromise<T> {
+  promise: Promise<T>;
+  resolve(value?: T | PromiseLike<T>): void;
+  reject(reason?: unknown): void;
+}
+
+export const pDefer = <T>(): DeferredPromise<T> => {
+  const deferred: Partial<DeferredPromise<T>> = {};
+  deferred.promise = new Promise((resolve, reject) => {
+    deferred.resolve = resolve;
+    deferred.reject = reject;
+  });
+  return deferred as DeferredPromise<T>;
+};

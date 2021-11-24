@@ -1,6 +1,5 @@
-import * as pDefer from "p-defer";
 import {DroppedError, RetryShutdownError} from "./error";
-import {awaitAtMost} from "./util";
+import {awaitAtMost, pDefer, DeferredPromise} from "./util";
 
 /**
  * Event retry settings
@@ -48,7 +47,7 @@ export type EventRetryOptions = {
  */
 export class EventRetrier {
   private options: EventRetryOptions;
-  private cancelWait: pDefer.DeferredPromise<void>;
+  private cancelWait: DeferredPromise<void>;
   constructor(opts: Partial<EventRetryOptions> = {}) {
     this.options = {
       attempts: 4,
@@ -120,7 +119,7 @@ export class EventRetrier {
           throw e;
         }
 
-        this.options.onError(e);
+        this.options.onError(e as Error);
 
         const retryInterval = Math.min(
           this.options.maxDelay,

@@ -1,4 +1,4 @@
-import * as EventEmitter from "events";
+import {EventEmitter} from "events";
 import {Duplex, PassThrough, Readable, Writable} from "stream";
 import * as duplexer3 from "duplexer3";
 

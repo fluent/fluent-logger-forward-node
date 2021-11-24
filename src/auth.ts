@@ -161,7 +161,7 @@ export class FluentAuthSocket extends FluentSocket {
       this.authState = FluentAuthState.AUTHENTICATED;
       this.onEstablished();
     } catch (e) {
-      return this.close(CloseState.FATAL, e);
+      return this.close(CloseState.FATAL, e as Error);
     }
   }
 }
