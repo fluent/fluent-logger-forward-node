@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>FluentClient | @fluent-org/logger</title>
+	<title>AckTimeoutError | @fluent-org/logger</title>
 	<meta name="description" content="Documentation for @fluent-org/logger">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<style type="text/css">:root {
@@ -2704,53 +2704,6 @@ img {
 </header>
 <nav class="tsd-navigation secondary">
 	<ul>
-		<li class="current tsd-kind-class">
-			<a href="fluentclient.html" class="tsd-kind-icon">Fluent<wbr>Client</a>
-			<ul>
-				<li class=" tsd-kind-constructor tsd-parent-kind-class">
-					<a href="fluentclient.html#constructor" class="tsd-kind-icon">constructor</a>
-				</li>
-				<li class=" tsd-kind-method tsd-parent-kind-class">
-					<a href="fluentclient.html#socketon" class="tsd-kind-icon">socket<wbr>On</a>
-				</li>
-				<li class=" tsd-kind-method tsd-parent-kind-class">
-					<a href="fluentclient.html#emit" class="tsd-kind-icon">emit</a>
-				</li>
-				<li class=" tsd-kind-method tsd-parent-kind-class">
-					<a href="fluentclient.html#connect" class="tsd-kind-icon">connect</a>
-				</li>
-				<li class=" tsd-kind-method tsd-parent-kind-class">
-					<a href="fluentclient.html#shutdown" class="tsd-kind-icon">shutdown</a>
-				</li>
-				<li class=" tsd-kind-method tsd-parent-kind-class">
-					<a href="fluentclient.html#disconnect" class="tsd-kind-icon">disconnect</a>
-				</li>
-				<li class=" tsd-kind-method tsd-parent-kind-class">
-					<a href="fluentclient.html#syncflush" class="tsd-kind-icon">sync<wbr>Flush</a>
-				</li>
-				<li class=" tsd-kind-method tsd-parent-kind-class">
-					<a href="fluentclient.html#flush" class="tsd-kind-icon">flush</a>
-				</li>
-				<li class=" tsd-kind-get-signature tsd-parent-kind-class">
-					<a href="fluentclient.html#sendqueuelength" class="tsd-kind-icon">send<wbr>Queue<wbr>Length</a>
-				</li>
-				<li class=" tsd-kind-get-signature tsd-parent-kind-class">
-					<a href="fluentclient.html#writable" class="tsd-kind-icon">writable</a>
-				</li>
-				<li class=" tsd-kind-get-signature tsd-parent-kind-class">
-					<a href="fluentclient.html#queuelength" class="tsd-kind-icon">queue<wbr>Length</a>
-				</li>
-				<li class=" tsd-kind-method tsd-parent-kind-class">
-					<a href="fluentclient.html#waitforpending" class="tsd-kind-icon">wait<wbr>For<wbr>Pending</a>
-				</li>
-			</ul>
-		</li>
-		<li class=" tsd-kind-class">
-			<a href="eventtime.html" class="tsd-kind-icon">Event<wbr>Time</a>
-		</li>
-		<li class=" tsd-kind-class">
-			<a href="fluentserver.html" class="tsd-kind-icon">Fluent<wbr>Server</a>
-		</li>
 	</ul>
 </nav>
 <div class="container container-main">
@@ -2758,7 +2711,7 @@ img {
 		<section class="tsd-panel tsd-comment">
 			<div class="tsd-comment tsd-typography">
 				<div class="lead">
-					<p>A Fluent Client. Connects to a FluentD server using the <a href="https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1">Forward protocol</a>.</p>
+					<p>Thrown when a client waiting for an acknowledgement times out</p>
 				</div>
 			</div>
 		</section>
@@ -2766,7 +2719,12 @@ img {
 			<h3>Hierarchy</h3>
 			<ul class="tsd-hierarchy">
 				<li>
-					<span class="target">FluentClient</span>
+					<span class="tsd-signature-type">BaseError</span>
+					<ul class="tsd-hierarchy">
+						<li>
+							<span class="target">AckTimeoutError</span>
+						</li>
+					</ul>
 				</li>
 			</ul>
 		</section>
@@ -2774,466 +2732,176 @@ img {
 			<h2>Index</h2>
 			<section class="tsd-panel tsd-index-panel">
 				<div class="tsd-index-content">
+					<section class="tsd-index-section tsd-is-inherited tsd-is-external">
+						<h3>Methods</h3>
+						<ul class="tsd-index-list">
+							<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external"><a href="FluentError.AckTimeoutError.html#captureStackTrace" class="tsd-kind-icon">capture<wbr>Stack<wbr>Trace</a></li>
+						</ul>
+					</section>
+					<section class="tsd-index-section tsd-is-inherited tsd-is-external">
+						<h3>Properties</h3>
+						<ul class="tsd-index-list">
+							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external"><a href="FluentError.AckTimeoutError.html#prepareStackTrace" class="tsd-kind-icon">prepare<wbr>Stack<wbr>Trace</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external"><a href="FluentError.AckTimeoutError.html#stackTraceLimit" class="tsd-kind-icon">stack<wbr>Trace<wbr>Limit</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external"><a href="FluentError.AckTimeoutError.html#name" class="tsd-kind-icon">name</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external"><a href="FluentError.AckTimeoutError.html#message" class="tsd-kind-icon">message</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external"><a href="FluentError.AckTimeoutError.html#stack" class="tsd-kind-icon">stack</a></li>
+						</ul>
+					</section>
 					<section class="tsd-index-section ">
 						<h3>Constructors</h3>
 						<ul class="tsd-index-list">
-							<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="fluentclient.html#constructor" class="tsd-kind-icon">constructor</a></li>
-						</ul>
-					</section>
-					<section class="tsd-index-section ">
-						<h3>Methods</h3>
-						<ul class="tsd-index-list">
-							<li class="tsd-kind-method tsd-parent-kind-class"><a href="fluentclient.html#socketon" class="tsd-kind-icon">socket<wbr>On</a></li>
-							<li class="tsd-kind-method tsd-parent-kind-class"><a href="fluentclient.html#emit" class="tsd-kind-icon">emit</a></li>
-							<li class="tsd-kind-method tsd-parent-kind-class"><a href="fluentclient.html#connect" class="tsd-kind-icon">connect</a></li>
-							<li class="tsd-kind-method tsd-parent-kind-class"><a href="fluentclient.html#shutdown" class="tsd-kind-icon">shutdown</a></li>
-							<li class="tsd-kind-method tsd-parent-kind-class"><a href="fluentclient.html#disconnect" class="tsd-kind-icon">disconnect</a></li>
-							<li class="tsd-kind-method tsd-parent-kind-class"><a href="fluentclient.html#syncflush" class="tsd-kind-icon">sync<wbr>Flush</a></li>
-							<li class="tsd-kind-method tsd-parent-kind-class"><a href="fluentclient.html#flush" class="tsd-kind-icon">flush</a></li>
-							<li class="tsd-kind-method tsd-parent-kind-class"><a href="fluentclient.html#waitforpending" class="tsd-kind-icon">wait<wbr>For<wbr>Pending</a></li>
-						</ul>
-					</section>
-					<section class="tsd-index-section ">
-						<h3>Accessors</h3>
-						<ul class="tsd-index-list">
-							<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="fluentclient.html#sendqueuelength" class="tsd-kind-icon">send<wbr>Queue<wbr>Length</a></li>
-							<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="fluentclient.html#writable" class="tsd-kind-icon">writable</a></li>
-							<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="fluentclient.html#queuelength" class="tsd-kind-icon">queue<wbr>Length</a></li>
+							<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite"><a href="FluentError.AckTimeoutError.html#constructor" class="tsd-kind-icon">constructor</a></li>
 						</ul>
 					</section>
 				</div>
 			</section>
 		</section>
-		<section class="tsd-panel-group tsd-member-group ">
-			<h2>Constructors</h2>
-			<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
-				<a name="constructor" class="tsd-anchor"></a>
-				<h3>constructor</h3>
-				<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">new <wbr>Fluent<wbr>Client<span class="tsd-signature-symbol">(</span>tag_prefix<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../modules.html#fluentclientoptions" class="tsd-signature-type" data-tsd-kind="Type alias">FluentClientOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="fluentclient.html" class="tsd-signature-type" data-tsd-kind="Class">FluentClient</a></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L244">src/client.ts:244</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Creates a new FluentClient</p>
-							</div>
-						</div>
-						<h4 class="tsd-parameters-title">Parameters</h4>
-						<ul class="tsd-parameters">
-							<li>
-								<h5>tag_prefix: <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = null</span></h5>
-								<div class="tsd-comment tsd-typography">
-									<p>A prefix to prefix to all tags. For example, passing the prefix &quot;foo&quot; will cause <code>emit(&quot;bar&quot;, data)</code> to emit with <code>foo.bar</code>.</p>
-								</div>
-							</li>
-							<li>
-								<h5>options: <a href="../modules.html#fluentclientoptions" class="tsd-signature-type" data-tsd-kind="Type alias">FluentClientOptions</a><span class="tsd-signature-symbol"> = {}</span></h5>
-								<div class="tsd-comment tsd-typography">
-									<p>The client options</p>
-								</div>
-							</li>
-						</ul>
-						<h4 class="tsd-returns-title">Returns <a href="fluentclient.html" class="tsd-signature-type" data-tsd-kind="Class">FluentClient</a></h4>
-					</li>
-				</ul>
-			</section>
-		</section>
-		<section class="tsd-panel-group tsd-member-group ">
+		<section class="tsd-panel-group tsd-member-group tsd-is-inherited tsd-is-external">
 			<h2>Methods</h2>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-				<a name="socketon" class="tsd-anchor"></a>
-				<h3>socket<wbr>On</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">socket<wbr>On<span class="tsd-signature-symbol">(</span>event<span class="tsd-signature-symbol">: </span><a href="../enums/fluentsocketevent.html" class="tsd-signature-type" data-tsd-kind="Enumeration">FluentSocketEvent</a>, listener<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external">
+				<a name="captureStackTrace" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagStatic">Static</span> capture<wbr>Stack<wbr>Trace</h3>
+				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external">
+					<li class="tsd-signature tsd-kind-icon">capture<wbr>Stack<wbr>Trace<span class="tsd-signature-symbol">(</span>targetObject<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span>, constructorOpt<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 				</ul>
 				<ul class="tsd-descriptions">
 					<li class="tsd-description">
 						<aside class="tsd-sources">
+							<p>Inherited from BaseError.captureStackTrace</p>
 							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L328">src/client.ts:328</a></li>
+								<li>Defined in node_modules/@types/node/globals.d.ts:4</li>
 							</ul>
 						</aside>
 						<div class="tsd-comment tsd-typography">
 							<div class="lead">
-								<p>Attaches an event listener to the underlying socket</p>
+								<p>Create .stack property on a target object</p>
 							</div>
-							<p>See FluentSocketEvent for more info</p>
 						</div>
 						<h4 class="tsd-parameters-title">Parameters</h4>
 						<ul class="tsd-parameters">
 							<li>
-								<h5>event: <a href="../enums/fluentsocketevent.html" class="tsd-signature-type" data-tsd-kind="Enumeration">FluentSocketEvent</a></h5>
+								<h5>targetObject: <span class="tsd-signature-type">object</span></h5>
 							</li>
 							<li>
-								<h5>listener: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></h5>
-								<ul class="tsd-parameters">
-									<li class="tsd-parameter-signature">
-										<ul class="tsd-signatures tsd-kind-type-literal">
-											<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
-										</ul>
-										<ul class="tsd-descriptions">
-											<li class="tsd-description">
-												<h4 class="tsd-parameters-title">Parameters</h4>
-												<ul class="tsd-parameters">
-													<li>
-														<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>args: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5>
-													</li>
-												</ul>
-												<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
-											</li>
-										</ul>
-									</li>
-								</ul>
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> constructorOpt: <span class="tsd-signature-type">Function</span></h5>
 							</li>
 						</ul>
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 					</li>
 				</ul>
 			</section>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-				<a name="emit" class="tsd-anchor"></a>
-				<h3>emit</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">emit<span class="tsd-signature-symbol">(</span>data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">EventRecord</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
-					<li class="tsd-signature tsd-kind-icon">emit<span class="tsd-signature-symbol">(</span>data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">EventRecord</span>, timestamp<span class="tsd-signature-symbol">: </span><a href="../modules.html#timestamp" class="tsd-signature-type" data-tsd-kind="Type alias">Timestamp</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
-					<li class="tsd-signature tsd-kind-icon">emit<span class="tsd-signature-symbol">(</span>label<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">EventRecord</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
-					<li class="tsd-signature tsd-kind-icon">emit<span class="tsd-signature-symbol">(</span>label<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">EventRecord</span>, timestamp<span class="tsd-signature-symbol">: </span><a href="../modules.html#timestamp" class="tsd-signature-type" data-tsd-kind="Type alias">Timestamp</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L360">src/client.ts:360</a></li>
+		</section>
+		<section class="tsd-panel-group tsd-member-group tsd-is-inherited tsd-is-external">
+			<h2>Properties</h2>
+			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external">
+				<a name="prepareStackTrace" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagStatic">Static</span> <span class="tsd-flag ts-flagOptional">Optional</span> prepare<wbr>Stack<wbr>Trace</h3>
+				<div class="tsd-signature tsd-kind-icon">prepare<wbr>Stack<wbr>Trace<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>err<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span>, stackTraces<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CallSite</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">any</span></div>
+				<aside class="tsd-sources">
+					<p>Inherited from BaseError.prepareStackTrace</p>
+					<ul>
+						<li>Defined in node_modules/@types/node/globals.d.ts:11</li>
+					</ul>
+				</aside>
+				<div class="tsd-type-declaration">
+					<h4>Type declaration</h4>
+					<ul class="tsd-parameters">
+						<li class="tsd-parameter-signature">
+							<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-class">
+								<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>err<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span>, stackTraces<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CallSite</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
 							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Emits an event to the Fluent Server</p>
-							</div>
-						</div>
-						<h4 class="tsd-parameters-title">Parameters</h4>
-						<ul class="tsd-parameters">
-							<li>
-								<h5>data: <span class="tsd-signature-type">EventRecord</span></h5>
-								<div class="tsd-comment tsd-typography">
-									<p>The event to emit (required)</p>
-								</div>
-							</li>
-						</ul>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
-						<p>A Promise, which resolves when the event is successfully sent to the server.
-						Enabling acknowledgements waits until the server indicates they have received the event.</p>
-					</li>
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L369">src/client.ts:369</a></li>
+							<ul class="tsd-descriptions">
+								<li class="tsd-description">
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>Optional override for formatting stack traces</p>
+										</div>
+									</div>
+									<h4 class="tsd-parameters-title">Parameters</h4>
+									<ul class="tsd-parameters">
+										<li>
+											<h5>err: <span class="tsd-signature-type">Error</span></h5>
+										</li>
+										<li>
+											<h5>stackTraces: <span class="tsd-signature-type">CallSite</span><span class="tsd-signature-symbol">[]</span></h5>
+										</li>
+									</ul>
+									<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+								</li>
 							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Emits an event to the Fluent Server</p>
-							</div>
-						</div>
-						<h4 class="tsd-parameters-title">Parameters</h4>
-						<ul class="tsd-parameters">
-							<li>
-								<h5>data: <span class="tsd-signature-type">EventRecord</span></h5>
-								<div class="tsd-comment tsd-typography">
-									<p>The event to emit (required)</p>
-								</div>
-							</li>
-							<li>
-								<h5>timestamp: <a href="../modules.html#timestamp" class="tsd-signature-type" data-tsd-kind="Type alias">Timestamp</a></h5>
-								<div class="tsd-comment tsd-typography">
-									<p>A millisecond resolution timestamp to associate with the event (optional)</p>
-								</div>
-							</li>
-						</ul>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
-						<p>A Promise, which resolves when the event is successfully sent to the server.
-						Enabling acknowledgements waits until the server indicates they have received the event.</p>
-					</li>
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L378">src/client.ts:378</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Emits an event to the Fluent Server</p>
-							</div>
-						</div>
-						<h4 class="tsd-parameters-title">Parameters</h4>
-						<ul class="tsd-parameters">
-							<li>
-								<h5>label: <span class="tsd-signature-type">string</span></h5>
-								<div class="tsd-comment tsd-typography">
-									<p>The label to emit the data with (optional)</p>
-								</div>
-							</li>
-							<li>
-								<h5>data: <span class="tsd-signature-type">EventRecord</span></h5>
-								<div class="tsd-comment tsd-typography">
-									<p>The event to emit (required)</p>
-								</div>
-							</li>
-						</ul>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
-						<p>A Promise, which resolves when the event is successfully sent to the server.
-						Enabling acknowledgements waits until the server indicates they have received the event.</p>
-					</li>
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L388">src/client.ts:388</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Emits an event to the Fluent Server</p>
-							</div>
-						</div>
-						<h4 class="tsd-parameters-title">Parameters</h4>
-						<ul class="tsd-parameters">
-							<li>
-								<h5>label: <span class="tsd-signature-type">string</span></h5>
-								<div class="tsd-comment tsd-typography">
-									<p>The label to emit the data with (optional)</p>
-								</div>
-							</li>
-							<li>
-								<h5>data: <span class="tsd-signature-type">EventRecord</span></h5>
-								<div class="tsd-comment tsd-typography">
-									<p>The event to emit (required)</p>
-								</div>
-							</li>
-							<li>
-								<h5>timestamp: <a href="../modules.html#timestamp" class="tsd-signature-type" data-tsd-kind="Type alias">Timestamp</a></h5>
-								<div class="tsd-comment tsd-typography">
-									<p>A millisecond resolution timestamp to associate with the event (optional)</p>
-								</div>
-							</li>
-						</ul>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
-						<p>A Promise, which resolves when the event is successfully sent to the server.
-						Enabling acknowledgements waits until the server indicates they have received the event.</p>
-					</li>
-				</ul>
+						</li>
+					</ul>
+				</div>
 			</section>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-				<a name="connect" class="tsd-anchor"></a>
-				<h3>connect</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">connect<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L512">src/client.ts:512</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Connects the client. Can happen automatically during construction, but can be called after a <code>disconnect()</code> to resume the client.</p>
-							</div>
-						</div>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
-					</li>
-				</ul>
+			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external">
+				<a name="stackTraceLimit" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagStatic">Static</span> stack<wbr>Trace<wbr>Limit</h3>
+				<div class="tsd-signature tsd-kind-icon">stack<wbr>Trace<wbr>Limit<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+				<aside class="tsd-sources">
+					<p>Inherited from BaseError.stackTraceLimit</p>
+					<ul>
+						<li>Defined in node_modules/@types/node/globals.d.ts:13</li>
+					</ul>
+				</aside>
 			</section>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-				<a name="shutdown" class="tsd-anchor"></a>
-				<h3>shutdown</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">shutdown<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L521">src/client.ts:521</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Closes the socket, and clears both the ackQueue and the sendQueue, rejecting all pending events.</p>
-							</div>
-							<p>For use during shutdown events, where we don&#39;t plan on reconnecting</p>
-						</div>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
-					</li>
-				</ul>
+			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external">
+				<a name="name" class="tsd-anchor"></a>
+				<h3>name</h3>
+				<div class="tsd-signature tsd-kind-icon">name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+				<aside class="tsd-sources">
+					<p>Inherited from BaseError.name</p>
+					<ul>
+						<li>Defined in node_modules/typescript/lib/lib.es5.d.ts:973</li>
+					</ul>
+				</aside>
 			</section>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-				<a name="disconnect" class="tsd-anchor"></a>
-				<h3>disconnect</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">disconnect<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L532">src/client.ts:532</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Closes the socket and clears the ackQueue. Keeps pending events, which can be sent via a later .connect()</p>
-							</div>
-						</div>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
-					</li>
-				</ul>
+			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external">
+				<a name="message" class="tsd-anchor"></a>
+				<h3>message</h3>
+				<div class="tsd-signature tsd-kind-icon">message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+				<aside class="tsd-sources">
+					<p>Inherited from BaseError.message</p>
+					<ul>
+						<li>Defined in node_modules/typescript/lib/lib.es5.d.ts:974</li>
+					</ul>
+				</aside>
 			</section>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-				<a name="syncflush" class="tsd-anchor"></a>
-				<h3>sync<wbr>Flush</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">sync<wbr>Flush<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L592">src/client.ts:592</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Flushes to the socket synchronously</p>
-							</div>
-							<p>Prefer calling <code>.flush</code> which will flush on the next tick, allowing events from this tick to queue up.</p>
-						</div>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
-						<p>true if there are more events in the queue to flush, false otherwise</p>
-					</li>
-				</ul>
-			</section>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-				<a name="flush" class="tsd-anchor"></a>
-				<h3>flush</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">flush<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L623">src/client.ts:623</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Flushes the event queue. Queues up the flushes for the next tick, preventing multiple flushes at the same time.</p>
-							</div>
-						</div>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></h4>
-						<p>A promise, which resolves with a boolean indicating if there are more events to flush.</p>
-					</li>
-				</ul>
-			</section>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-				<a name="waitforpending" class="tsd-anchor"></a>
-				<h3>wait<wbr>For<wbr>Pending</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">wait<wbr>For<wbr>Pending<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L882">src/client.ts:882</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Waits for all currently pending events to successfully resolve or reject</p>
-							</div>
-						</div>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
-						<p>A Promise which resolves once all the pending events have successfully been emitted</p>
-					</li>
-				</ul>
+			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external">
+				<a name="stack" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagOptional">Optional</span> stack</h3>
+				<div class="tsd-signature tsd-kind-icon">stack<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+				<aside class="tsd-sources">
+					<p>Inherited from BaseError.stack</p>
+					<ul>
+						<li>Defined in node_modules/typescript/lib/lib.es5.d.ts:975</li>
+					</ul>
+				</aside>
 			</section>
 		</section>
 		<section class="tsd-panel-group tsd-member-group ">
-			<h2>Accessors</h2>
-			<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
-				<a name="sendqueuelength" class="tsd-anchor"></a>
-				<h3>send<wbr>Queue<wbr>Length</h3>
-				<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> sendQueueLength<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+			<h2>Constructors</h2>
+			<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
+				<a name="constructor" class="tsd-anchor"></a>
+				<h3>constructor</h3>
+				<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
+					<li class="tsd-signature tsd-kind-icon">new <wbr>Ack<wbr>Timeout<wbr>Error<span class="tsd-signature-symbol">(</span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="FluentError.AckTimeoutError.html" class="tsd-signature-type" data-tsd-kind="Class">AckTimeoutError</a></li>
 				</ul>
 				<ul class="tsd-descriptions">
 					<li class="tsd-description">
 						<aside class="tsd-sources">
+							<p>Overrides BaseError.constructor</p>
 							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L855">src/client.ts:855</a></li>
+								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/19d9f02/src/error.ts#L41">src/error.ts:41</a></li>
 							</ul>
 						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Returns the number of queued events that haven&#39;t been sent yet</p>
-							</div>
-							<p>Useful to react if we&#39;re queuing up too many events within a single tick</p>
-						</div>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
-					</li>
-				</ul>
-			</section>
-			<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
-				<a name="writable" class="tsd-anchor"></a>
-				<h3>writable</h3>
-				<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> writable<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L864">src/client.ts:864</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Returns whether or not the socket is writable</p>
-							</div>
-							<p>Useful to react if we&#39;re disconnected for any reason</p>
-						</div>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
-					</li>
-				</ul>
-			</section>
-			<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
-				<a name="queuelength" class="tsd-anchor"></a>
-				<h3>queue<wbr>Length</h3>
-				<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> queueLength<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/client.ts#L873">src/client.ts:873</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Returns the number of events that have been queued, but haven&#39;t resolved yet</p>
-							</div>
-							<p>This includes acknowledgements and retries if enabled.</p>
-						</div>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						<h4 class="tsd-parameters-title">Parameters</h4>
+						<ul class="tsd-parameters">
+							<li>
+								<h5>message: <span class="tsd-signature-type">string</span></h5>
+							</li>
+						</ul>
+						<h4 class="tsd-returns-title">Returns <a href="FluentError.AckTimeoutError.html" class="tsd-signature-type" data-tsd-kind="Class">AckTimeoutError</a></h4>
 					</li>
 				</ul>
 			</section>

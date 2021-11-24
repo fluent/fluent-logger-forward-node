@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>QueueShutdownError | @fluent-org/logger</title>
+	<title>AckShutdownError | @fluent-org/logger</title>
 	<meta name="description" content="Documentation for @fluent-org/logger">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<style type="text/css">:root {
@@ -2711,19 +2711,18 @@ img {
 		<section class="tsd-panel tsd-comment">
 			<div class="tsd-comment tsd-typography">
 				<div class="lead">
-					<p>Thrown when an event is dropped as a result of clearing out the queue on shutdown</p>
+					<p>Thrown into the ack queue on shutdown, terminating all promises waiting for an ack</p>
 				</div>
-				<p>Extends DroppedError since the message was dropped from the queue</p>
 			</div>
 		</section>
 		<section class="tsd-panel tsd-hierarchy">
 			<h3>Hierarchy</h3>
 			<ul class="tsd-hierarchy">
 				<li>
-					<a href="fluenterror.droppederror.html" class="tsd-signature-type" data-tsd-kind="Class">DroppedError</a>
+					<span class="tsd-signature-type">BaseError</span>
 					<ul class="tsd-hierarchy">
 						<li>
-							<span class="target">QueueShutdownError</span>
+							<span class="target">AckShutdownError</span>
 						</li>
 					</ul>
 				</li>
@@ -2736,23 +2735,23 @@ img {
 					<section class="tsd-index-section tsd-is-inherited tsd-is-external">
 						<h3>Methods</h3>
 						<ul class="tsd-index-list">
-							<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external"><a href="fluenterror.queueshutdownerror.html#capturestacktrace" class="tsd-kind-icon">capture<wbr>Stack<wbr>Trace</a></li>
+							<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external"><a href="FluentError.AckShutdownError.html#captureStackTrace" class="tsd-kind-icon">capture<wbr>Stack<wbr>Trace</a></li>
 						</ul>
 					</section>
 					<section class="tsd-index-section tsd-is-inherited tsd-is-external">
 						<h3>Properties</h3>
 						<ul class="tsd-index-list">
-							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external"><a href="fluenterror.queueshutdownerror.html#preparestacktrace" class="tsd-kind-icon">prepare<wbr>Stack<wbr>Trace</a></li>
-							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external"><a href="fluenterror.queueshutdownerror.html#stacktracelimit" class="tsd-kind-icon">stack<wbr>Trace<wbr>Limit</a></li>
-							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external"><a href="fluenterror.queueshutdownerror.html#name" class="tsd-kind-icon">name</a></li>
-							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external"><a href="fluenterror.queueshutdownerror.html#message" class="tsd-kind-icon">message</a></li>
-							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external"><a href="fluenterror.queueshutdownerror.html#stack" class="tsd-kind-icon">stack</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external"><a href="FluentError.AckShutdownError.html#prepareStackTrace" class="tsd-kind-icon">prepare<wbr>Stack<wbr>Trace</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external"><a href="FluentError.AckShutdownError.html#stackTraceLimit" class="tsd-kind-icon">stack<wbr>Trace<wbr>Limit</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external"><a href="FluentError.AckShutdownError.html#name" class="tsd-kind-icon">name</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external"><a href="FluentError.AckShutdownError.html#message" class="tsd-kind-icon">message</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-external"><a href="FluentError.AckShutdownError.html#stack" class="tsd-kind-icon">stack</a></li>
 						</ul>
 					</section>
 					<section class="tsd-index-section ">
 						<h3>Constructors</h3>
 						<ul class="tsd-index-list">
-							<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite"><a href="fluenterror.queueshutdownerror.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite"><a href="FluentError.AckShutdownError.html#constructor" class="tsd-kind-icon">constructor</a></li>
 						</ul>
 					</section>
 				</div>
@@ -2761,7 +2760,7 @@ img {
 		<section class="tsd-panel-group tsd-member-group tsd-is-inherited tsd-is-external">
 			<h2>Methods</h2>
 			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external">
-				<a name="capturestacktrace" class="tsd-anchor"></a>
+				<a name="captureStackTrace" class="tsd-anchor"></a>
 				<h3><span class="tsd-flag ts-flagStatic">Static</span> capture<wbr>Stack<wbr>Trace</h3>
 				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external">
 					<li class="tsd-signature tsd-kind-icon">capture<wbr>Stack<wbr>Trace<span class="tsd-signature-symbol">(</span>targetObject<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span>, constructorOpt<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
@@ -2769,7 +2768,7 @@ img {
 				<ul class="tsd-descriptions">
 					<li class="tsd-description">
 						<aside class="tsd-sources">
-							<p>Inherited from <a href="fluenterror.droppederror.html">DroppedError</a>.<a href="fluenterror.droppederror.html#capturestacktrace">captureStackTrace</a></p>
+							<p>Inherited from BaseError.captureStackTrace</p>
 							<ul>
 								<li>Defined in node_modules/@types/node/globals.d.ts:4</li>
 							</ul>
@@ -2796,11 +2795,11 @@ img {
 		<section class="tsd-panel-group tsd-member-group tsd-is-inherited tsd-is-external">
 			<h2>Properties</h2>
 			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external">
-				<a name="preparestacktrace" class="tsd-anchor"></a>
+				<a name="prepareStackTrace" class="tsd-anchor"></a>
 				<h3><span class="tsd-flag ts-flagStatic">Static</span> <span class="tsd-flag ts-flagOptional">Optional</span> prepare<wbr>Stack<wbr>Trace</h3>
 				<div class="tsd-signature tsd-kind-icon">prepare<wbr>Stack<wbr>Trace<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>err<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span>, stackTraces<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CallSite</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">any</span></div>
 				<aside class="tsd-sources">
-					<p>Inherited from <a href="fluenterror.droppederror.html">DroppedError</a>.<a href="fluenterror.droppederror.html#preparestacktrace">prepareStackTrace</a></p>
+					<p>Inherited from BaseError.prepareStackTrace</p>
 					<ul>
 						<li>Defined in node_modules/@types/node/globals.d.ts:11</li>
 					</ul>
@@ -2836,11 +2835,11 @@ img {
 				</div>
 			</section>
 			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static tsd-is-external">
-				<a name="stacktracelimit" class="tsd-anchor"></a>
+				<a name="stackTraceLimit" class="tsd-anchor"></a>
 				<h3><span class="tsd-flag ts-flagStatic">Static</span> stack<wbr>Trace<wbr>Limit</h3>
 				<div class="tsd-signature tsd-kind-icon">stack<wbr>Trace<wbr>Limit<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 				<aside class="tsd-sources">
-					<p>Inherited from <a href="fluenterror.droppederror.html">DroppedError</a>.<a href="fluenterror.droppederror.html#stacktracelimit">stackTraceLimit</a></p>
+					<p>Inherited from BaseError.stackTraceLimit</p>
 					<ul>
 						<li>Defined in node_modules/@types/node/globals.d.ts:13</li>
 					</ul>
@@ -2851,7 +2850,7 @@ img {
 				<h3>name</h3>
 				<div class="tsd-signature tsd-kind-icon">name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 				<aside class="tsd-sources">
-					<p>Inherited from <a href="fluenterror.droppederror.html">DroppedError</a>.<a href="fluenterror.droppederror.html#name">name</a></p>
+					<p>Inherited from BaseError.name</p>
 					<ul>
 						<li>Defined in node_modules/typescript/lib/lib.es5.d.ts:973</li>
 					</ul>
@@ -2862,7 +2861,7 @@ img {
 				<h3>message</h3>
 				<div class="tsd-signature tsd-kind-icon">message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 				<aside class="tsd-sources">
-					<p>Inherited from <a href="fluenterror.droppederror.html">DroppedError</a>.<a href="fluenterror.droppederror.html#message">message</a></p>
+					<p>Inherited from BaseError.message</p>
 					<ul>
 						<li>Defined in node_modules/typescript/lib/lib.es5.d.ts:974</li>
 					</ul>
@@ -2873,7 +2872,7 @@ img {
 				<h3><span class="tsd-flag ts-flagOptional">Optional</span> stack</h3>
 				<div class="tsd-signature tsd-kind-icon">stack<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 				<aside class="tsd-sources">
-					<p>Inherited from <a href="fluenterror.droppederror.html">DroppedError</a>.<a href="fluenterror.droppederror.html#stack">stack</a></p>
+					<p>Inherited from BaseError.stack</p>
 					<ul>
 						<li>Defined in node_modules/typescript/lib/lib.es5.d.ts:975</li>
 					</ul>
@@ -2886,14 +2885,14 @@ img {
 				<a name="constructor" class="tsd-anchor"></a>
 				<h3>constructor</h3>
 				<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
-					<li class="tsd-signature tsd-kind-icon">new <wbr>Queue<wbr>Shutdown<wbr>Error<span class="tsd-signature-symbol">(</span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="fluenterror.queueshutdownerror.html" class="tsd-signature-type" data-tsd-kind="Class">QueueShutdownError</a></li>
+					<li class="tsd-signature tsd-kind-icon">new <wbr>Ack<wbr>Shutdown<wbr>Error<span class="tsd-signature-symbol">(</span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="FluentError.AckShutdownError.html" class="tsd-signature-type" data-tsd-kind="Class">AckShutdownError</a></li>
 				</ul>
 				<ul class="tsd-descriptions">
 					<li class="tsd-description">
 						<aside class="tsd-sources">
-							<p>Overrides <a href="fluenterror.droppederror.html">DroppedError</a>.<a href="fluenterror.droppederror.html#constructor">constructor</a></p>
+							<p>Overrides BaseError.constructor</p>
 							<ul>
-								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/689870f/src/error.ts#L87">src/error.ts:87</a></li>
+								<li>Defined in <a href="https://github.com/fluent/fluent-logger-forward-node/blob/19d9f02/src/error.ts#L97">src/error.ts:97</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2902,7 +2901,7 @@ img {
 								<h5>message: <span class="tsd-signature-type">string</span></h5>
 							</li>
 						</ul>
-						<h4 class="tsd-returns-title">Returns <a href="fluenterror.queueshutdownerror.html" class="tsd-signature-type" data-tsd-kind="Class">QueueShutdownError</a></h4>
+						<h4 class="tsd-returns-title">Returns <a href="FluentError.AckShutdownError.html" class="tsd-signature-type" data-tsd-kind="Class">AckShutdownError</a></h4>
 					</li>
 				</ul>
 			</section>
