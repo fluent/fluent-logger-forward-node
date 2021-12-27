@@ -15,7 +15,7 @@ Built upon [fluent-logger-node](https://github.com/fluent/fluent-logger-node).
 ## Client
 `@fluent-org/logger` provides a fully functional client that implements the Forward protocol. It supports reconnection, acknowledgements, timeouts, event retries, and more, and exposes its functionality via a simple typed Promise interface.
 
-For a full list of the client options and methods, see the [FluentClient docs](https://fluent.github.io/fluent-logger-forward-node/classes/fluentclient.html)
+For a full list of the client options and methods, see the [FluentClient docs](https://fluent.github.io/fluent-logger-forward-node/classes/FluentClient.html)
 
 ### Prerequisites
 The fluent daemon should be listening in forward mode.
