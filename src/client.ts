@@ -473,7 +473,9 @@ export class FluentClient {
     }
     if (!this.emitQueue.has(emitPromise)) {
       this.emitQueue.add(emitPromise);
-      emitPromise.finally(() => this.emitQueue.delete(emitPromise));
+      emitPromise
+        .finally(() => this.emitQueue.delete(emitPromise))
+        .catch(() => {});
     }
     return emitPromise;
   }

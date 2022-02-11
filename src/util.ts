@@ -13,7 +13,11 @@ export const awaitAtMost = <T>(
         }, timeout))
     ),
   ]);
-  racePromise.finally(() => (timeoutId ? clearTimeout(timeoutId) : undefined));
+  racePromise
+    .finally(() => {
+      if (timeoutId) clearTimeout(timeoutId);
+    })
+    .catch(() => {});
   return racePromise;
 };
 
