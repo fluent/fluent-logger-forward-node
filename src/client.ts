@@ -473,7 +473,9 @@ export class FluentClient {
     }
     if (!this.emitQueue.has(emitPromise)) {
       this.emitQueue.add(emitPromise);
-      emitPromise.finally(() => this.emitQueue.delete(emitPromise));
+      emitPromise
+        .finally(() => this.emitQueue.delete(emitPromise))
+        .catch(() => {});
     }
     return emitPromise;
   }
@@ -787,7 +789,7 @@ export class FluentClient {
 
     if (!chunk) {
       // Wait for the promise to resolve before resolving the deferred
-      writePromise.then(() => nextPacket.deferred.resolve()).catch(() => {});
+      writePromise.then(() => nextPacket.deferred.resolve());
     }
     return true;
   }
