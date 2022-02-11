@@ -13,7 +13,9 @@ export const awaitAtMost = <T>(
         }, timeout))
     ),
   ]);
-  return racePromise.finally(() => (timeoutId ? clearTimeout(timeoutId) : undefined));
+  return racePromise.finally(() => {
+    if (timeoutId) clearTimeout(timeoutId);
+  });
 };
 
 export const awaitNextTick = (): Promise<void> => {
