@@ -789,7 +789,10 @@ export class FluentClient {
 
     if (!chunk) {
       // Wait for the promise to resolve before resolving the deferred
-      writePromise.then(() => nextPacket.deferred.resolve());
+      writePromise.then(
+        () => nextPacket.deferred.resolve(),
+        () => {}
+      );
     }
     return true;
   }
