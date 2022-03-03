@@ -16,6 +16,7 @@ import {
 } from "../src/error";
 import {awaitNextTick, awaitTimeout} from "../src/util";
 import {FluentSocketEvent} from "../src/socket";
+import {FluentServer} from "../src";
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -516,6 +517,33 @@ describe("FluentClient", () => {
     await expect(firstEvent).to.eventually.be.fulfilled;
 
     sinon.assert.calledTwice(spy);
+  });
+
+  it("should allow multiple connects and disconnects in succession", async () => {
+    const server = new FluentServer();
+    await server.listen();
+
+    try {
+      const client = new FluentClient("abc", {
+        socket: {
+          port: server.port,
+        },
+        disableAutoconnect: true,
+      });
+
+      await client.connect();
+      try {
+        const firstEvent = client.emit("a", {event: "foo bar"});
+
+        await client.disconnect();
+        await client.connect();
+        await expect(firstEvent).to.eventually.be.fulfilled;
+      } finally {
+        await client.shutdown();
+      }
+    } finally {
+      await server.close();
+    }
   });
 
   it("should reject pending events after shutdown", async () => {
