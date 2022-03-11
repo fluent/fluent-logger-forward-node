@@ -10,7 +10,6 @@ import {
 } from "./error";
 import * as protocol from "./protocol";
 import {PassThrough, Duplex} from "stream";
-import {awaitNextTick} from "./util";
 
 /**
  * Reconnection settings for the socket
@@ -345,7 +344,9 @@ export class FluentSocket extends EventEmitter {
     ) {
       if (this.state === SocketState.DISCONNECTING) {
         // Try again once the socket has fully closed
-        await awaitNextTick();
+        await new Promise(resolve =>
+          this.once(FluentSocketEvent.CLOSE, resolve)
+        );
         return await this.connect();
       } else {
         // noop, we're connected
