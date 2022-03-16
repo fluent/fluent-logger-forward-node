@@ -262,6 +262,34 @@ describe("FluentSocket", () => {
     });
   });
 
+  it("should not reconnect after disconnect if the remote socket is unavilable", done => {
+    const {socket, stream, connectStub} = createFluentSocket({reconnect: {}});
+
+    expect((<any>socket).reconnectEnabled).to.be.true;
+
+    socket.connect();
+
+    sinon.assert.calledOnce(connectStub);
+
+    const spy = sinon.spy(socket, "connect");
+
+    socket.once(FluentSocketEvent.WRITABLE, async () => {
+      socket.once(FluentSocketEvent.CLOSE, async () => {
+        setImmediate(async () => {
+          expect((<any>socket).reconnectTimeoutId).not.to.be.null;
+          await expect(socket.disconnect()).to.eventually.be.equal(undefined);
+          expect((<any>socket).reconnectTimeoutId).to.be.null;
+          sinon.assert.notCalled(spy);
+          done();
+        });
+      });
+
+      setImmediate(() => {
+        stream.socket.emit("close");
+      });
+    });
+  });
+
   it("should reject writes if socket is not writable", done => {
     const {socket, stream, connectStub} = createFluentSocket();
 
