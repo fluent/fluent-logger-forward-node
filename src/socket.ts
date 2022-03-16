@@ -673,6 +673,10 @@ export class FluentSocket extends EventEmitter {
    */
   public disconnect(): Promise<void> {
     return new Promise(resolve => {
+      if (this.reconnectTimeoutId !== null) {
+        clearTimeout(this.reconnectTimeoutId);
+        this.reconnectTimeoutId = null;
+      }
       if (this.socket !== null) {
         this.state = SocketState.DISCONNECTING;
         this.socket.end(resolve);
