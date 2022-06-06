@@ -716,7 +716,36 @@ export const encodeMessage = (
 export const decodeClientStream = (
   dataStream: Readable
 ): AsyncIterable<ClientMessage> => {
-  return decoder().decodeStream(dataStream) as AsyncIterable<ClientMessage>;
+  // This is a hack to avoid messagepack utf8-ization of the msgpack str format, since it mangles data.
+  // Fluentd, when using the out_forward plugin, will pass the data in PackedForward mode using a str to represent the packed Forward messages.
+  // This would normally end up getting decoded as utf8 by @msgpack/msgpack, and turned into complete garbage. This short circuits that function in the parser,
+  const streamDecoder = decoder() as any;
+  streamDecoder._decodeUtf8String = streamDecoder.decodeUtf8String;
+  streamDecoder.decodeUtf8String = function (
+    this: typeof streamDecoder,
+    byteLength: number,
+    headerOffset: number
+  ) {
+    if (this.bytes.byteLength < this.pos + headerOffset + byteLength) {
+      // Defer to the error handling inside the normal function, if we don't have enough data to parse
+      return this._decodeUtf8String(byteLength, headerOffset);
+    }
+    const offset = this.pos + headerOffset;
+    // If the first byte is 0x92 (fixarr of size 2), this represents a msgpack str encoded entry
+    // Also catch 0xdc and 0xdd, which represents arrays. This should never be passed, fixarr is more efficient, but just to cover all bases.
+    // If the first byte is 0x1f, then assume it is compressed
+    if (
+      this.bytes[offset] === 0x92 ||
+      this.bytes[offset] === 0x1f ||
+      this.bytes[offset] === 0xdc ||
+      this.bytes[offset] === 0xdd
+    ) {
+      return this.decodeBinary(byteLength, headerOffset);
+    } else {
+      return this._decodeUtf8String(byteLength, headerOffset);
+    }
+  }.bind(streamDecoder);
+  return streamDecoder.decodeStream(dataStream) as AsyncIterable<ClientMessage>;
 };
 
 /**
