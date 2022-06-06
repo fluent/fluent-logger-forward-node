@@ -7,6 +7,7 @@ import {
   DecodeError,
   SharedKeyMismatchError,
 } from "../src/error";
+import {Readable} from "stream";
 
 describe("Protocol", () => {
   describe("isHelo", () => {
@@ -645,6 +646,46 @@ describe("Protocol", () => {
         DecodeError,
         /invalid entries/
       );
+    });
+  });
+  describe("decodeClientStream", () => {
+    it("should parse msgpack str encoded records", async () => {
+      const entries = [
+        protocol.generateEntry(0, {abc: "def"}),
+        protocol.generateEntry(1, {ghi: "jkl"}),
+      ];
+      const packedEntries = entries.map(protocol.packEntry);
+      const packedEntryLength = packedEntries.reduce((r, v) => r + v.length, 0);
+      const message = protocol.generatePackedForwardMode(
+        "test",
+        packedEntries,
+        packedEntryLength
+      );
+      const msg = protocol.encodeMessage(message);
+      // 1 byte for the array byte (0x93, 1 byte for the fixstr containing "test"), then one byte for each of the str
+      // Change the 0xc4 (bin8) representing the message to a 0xd9 (str8), this is the same format as FluentD sends data as
+      msg[1 + 1 + message[0].length] = 0xd9;
+
+      const s = new Readable();
+      s.push(msg);
+      s.push(null);
+
+      const iterable = protocol.decodeClientStream(s);
+      let parsedMessage: protocol.ClientMessage | undefined;
+      for await (const msg of iterable) {
+        parsedMessage = msg;
+      }
+
+      expect(parsedMessage).to.not.be.undefined;
+      expect(protocol.isClientTransportMessage(parsedMessage)).to.be.true;
+      if (!parsedMessage || !protocol.isClientTransportMessage(parsedMessage)) {
+        return;
+      }
+
+      const originalMessage = protocol.parseTransport(parsedMessage);
+      console.log(originalMessage);
+      expect(originalMessage.entries[0][0]).to.equal(entries[0][0]);
+      expect(originalMessage.entries[1][0]).to.equal(entries[1][0]);
     });
   });
 });
