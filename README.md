@@ -122,7 +122,7 @@ const logger = new FluentClient("tag_prefix", {
     host: "localhost",
     port: 24224,
     timeout: 3000, // 3 seconds
-  }
+  },
   security: {
     clientHostname: "client.localdomain",
     sharedKey: "secure_communication_is_awesome"
@@ -159,14 +159,14 @@ const logger = new FluentClient("tag_prefix", {
     host: "localhost",
     port: 24224,
     timeout: 3000, // 3 seconds
-  }
+    tls: {
+      ca: fs.readFileSync("/path/to/ca_cert.pem")
+    },
+  },
   security: {
     clientHostname: "client.localdomain",
     sharedKey: "secure_communication_is_awesome"
-  }
-  tls: {
-    ca: fs.readFileSync("/path/to/ca_cert.pem")
-  }
+  },
 });
 ```
 
@@ -206,16 +206,16 @@ const logger = new FluentClient("tag_prefix", {
     host: "localhost",
     port: 24224,
     timeout: 3000, // 3 seconds
-  }
+    tls: {
+      ca: fs.readFileSync("/path/to/ca_cert.pem"),
+      cert: fs.readFileSync("/path/to/client-cert.pem"),
+      key: fs.readFileSync("/path/to/client-key.pem"),
+      passphrase: "very-secret"
+    },
+  },
   security: {
     clientHostname: "client.localdomain",
     sharedKey: "secure_communication_is_awesome"
-  }
-  tls: {
-    ca: fs.readFileSync("/path/to/ca_cert.pem"),
-    cert: fs.readFileSync("/path/to/client-cert.pem"),
-    key: fs.readFileSync("/path/to/client-key.pem"),
-    passphrase: "very-secret"
   }
 });
 ```
