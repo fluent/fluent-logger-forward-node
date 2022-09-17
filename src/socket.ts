@@ -400,7 +400,11 @@ export class FluentSocket extends EventEmitter {
    * @returns A new socket to use for the connection
    */
   private createTlsSocket(): tls.TLSSocket {
-    return tls.connect({...this.tlsOptions, ...this.socketParams});
+    let opts: net.NetConnectOpts = {...this.tlsOptions, ...this.socketParams};
+    if (this.timeout >= 0) {
+      opts = {...opts, timeout: this.timeout};
+    }
+    return tls.connect(opts);
   }
 
   /**
