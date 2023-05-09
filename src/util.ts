@@ -43,3 +43,5 @@ export const pDefer = <T>(): DeferredPromise<T> => {
   });
   return deferred as DeferredPromise<T>;
 };
+
+export const Max32BitSignedInteger = 2 ** 31 - 1;

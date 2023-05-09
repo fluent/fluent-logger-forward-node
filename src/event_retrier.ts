@@ -1,5 +1,10 @@
 import {DroppedError, RetryShutdownError} from "./error";
-import {awaitAtMost, pDefer, DeferredPromise} from "./util";
+import {
+  awaitAtMost,
+  pDefer,
+  DeferredPromise,
+  Max32BitSignedInteger,
+} from "./util";
 
 /**
  * Event retry settings
@@ -54,7 +59,7 @@ export class EventRetrier {
       backoff: 2,
       delay: 100,
       minDelay: -Infinity,
-      maxDelay: +Infinity,
+      maxDelay: Max32BitSignedInteger,
       onError: () => {},
       ...(opts || {}),
     };
