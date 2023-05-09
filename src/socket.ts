@@ -10,6 +10,7 @@ import {
 } from "./error";
 import * as protocol from "./protocol";
 import {PassThrough, Duplex} from "stream";
+import {Max32BitSignedInteger} from "./util";
 
 /**
  * Reconnection settings for the socket
@@ -320,7 +321,7 @@ export class FluentSocket extends EventEmitter {
       backoff: 2,
       delay: 500, // default is 500ms
       minDelay: -Infinity,
-      maxDelay: +Infinity,
+      maxDelay: Max32BitSignedInteger,
       ...(options.reconnect || {}),
     };
   }
